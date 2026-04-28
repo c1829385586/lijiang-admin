@@ -195,6 +195,7 @@
     // ====== 全局状态 ======
     const state = {
       logged: !!localStorage.getItem('admin_token'),
+      currentUser: JSON.parse(localStorage.getItem('admin_user') || 'null'),
       currentPage: 'dashboard',
       loginForm: { username: '', password: '' },
       loginLoading: false,
@@ -221,8 +222,40 @@
       ]
     }
     
+    // ====== 角色权限配置 ======
+    const roles = {
+      superadmin: {
+        name: '超级管理员',
+        permissions: ['dashboard', 'merchants', 'orders', 'rooms', 'users', 'reviews', 'marketing', 'finance', 'notifications', 'settings', 'accounts', 'permissions']
+      },
+      admin: {
+        name: '管理员',
+        permissions: ['dashboard', 'merchants', 'orders', 'rooms', 'users', 'reviews', 'marketing', 'finance', 'notifications', 'settings']
+      },
+      operator: {
+        name: '运营专员',
+        permissions: ['dashboard', 'merchants', 'orders', 'users', 'reviews', 'marketing', 'notifications']
+      },
+      finance: {
+        name: '财务人员',
+        permissions: ['dashboard', 'orders', 'finance', 'notifications']
+      },
+      customer_service: {
+        name: '客服人员',
+        permissions: ['dashboard', 'orders', 'users', 'reviews', 'notifications']
+      }
+    }
+    
+    // ====== 账号数据 ======
+    const accounts = [
+      { id: 1, username: 'admin', password: 'admin123', name: '超级管理员', role: 'superadmin', phone: '13800138000', email: 'admin@lijiang.com', status: 'active', created_at: '2026-01-01T00:00:00' },
+      { id: 2, username: 'operator1', password: 'op123456', name: '运营小李', role: 'operator', phone: '13800138001', email: 'op1@lijiang.com', status: 'active', created_at: '2026-02-15T00:00:00' },
+      { id: 3, username: 'finance1', password: 'fn123456', name: '财务小王', role: 'finance', phone: '13800138002', email: 'fn1@lijiang.com', status: 'active', created_at: '2026-03-01T00:00:00' },
+      { id: 4, username: 'service1', password: 'cs123456', name: '客服小张', role: 'customer_service', phone: '13800138003', email: 'cs1@lijiang.com', status: 'active', created_at: '2026-03-10T00:00:00' }
+    ]
+    
     // ====== 菜单配置 ======
-    const menuItems = [
+    const allMenuItems = [
       { key: 'dashboard', icon: '📊', label: '数据概览' },
       { key: 'merchants', icon: '🏪', label: '商家管理' },
       { key: 'orders', icon: '📋', label: '订单管理' },
@@ -232,6 +265,8 @@
       { key: 'marketing', icon: '🎯', label: '营销活动' },
       { key: 'finance', icon: '💰', label: '财务报表' },
       { key: 'notifications', icon: '🔔', label: '消息通知' },
+      { key: 'accounts', icon: '👥', label: '账号管理' },
+      { key: 'permissions', icon: '🔐', label: '权限设置' },
       { key: 'settings', icon: '⚙️', label: '系统设置' }
     ]
     
@@ -280,11 +315,18 @@
       render()
       
       setTimeout(() => {
-        if (username === 'admin' && password === 'admin123') {
+        const account = accounts.find(a => a.username === username && a.password === password)
+        if (account && account.status === 'active') {
           localStorage.setItem('admin_token', 'admin-login-success')
+          localStorage.setItem('admin_user', JSON.stringify(account))
           state.logged = true
+          state.currentUser = account
           state.loginLoading = false
           loadDashboard()
+          render()
+        } else if (account && account.status !== 'active') {
+          state.loginLoading = false
+          state.loginError = '账号已被禁用，请联系管理员'
           render()
         } else {
           state.loginLoading = false
@@ -296,9 +338,25 @@
     
     function doLogout() {
       localStorage.removeItem('admin_token')
+      localStorage.removeItem('admin_user')
       state.logged = false
+      state.currentUser = null
       state.currentPage = 'dashboard'
       render()
+    }
+    
+    function getUserMenuItems() {
+      if (!state.currentUser) return []
+      const role = roles[state.currentUser.role]
+      if (!role) return []
+      return allMenuItems.filter(item => role.permissions.includes(item.key))
+    }
+    
+    function hasPermission(page) {
+      if (!state.currentUser) return false
+      const role = roles[state.currentUser.role]
+      if (!role) return false
+      return role.permissions.includes(page)
     }
     
     function goPage(key) {
@@ -486,29 +544,47 @@
               </button>
               ${state.loginError ? `<div class="error-msg">${state.loginError}</div>` : ''}
             </div>
-            <div class="login-hint">默认: admin / admin123</div>
+            <div class="login-hint">
+              <div>测试账号：</div>
+              <div style="margin-top:4px">admin / admin123（超级管理员）</div>
+              <div>operator1 / op123456（运营）</div>
+              <div>finance1 / fn123456（财务）</div>
+              <div>service1 / cs123456（客服）</div>
+            </div>
           </div>
         </div>
       `
     }
     
     function renderMain() {
-      const currentMenu = menuItems.find(m => m.key === state.currentPage) || menuItems[0]
+      const userMenuItems = getUserMenuItems()
+      const currentMenu = userMenuItems.find(m => m.key === state.currentPage) || userMenuItems[0] || allMenuItems[0]
+      
+      // 检查当前页面是否有权限访问
+      if (!hasPermission(state.currentPage)) {
+        state.currentPage = 'dashboard'
+      }
+      
       let contentHTML = ''
       
       switch(state.currentPage) {
         case 'dashboard': contentHTML = renderDashboard(); break
-        case 'merchants': contentHTML = renderMerchants(); break
-        case 'orders': contentHTML = renderOrders(); break
-        case 'rooms': contentHTML = renderRooms(); break
-        case 'users': contentHTML = renderUsers(); break
-        case 'reviews': contentHTML = renderReviews(); break
-        case 'marketing': contentHTML = renderMarketing(); break
-        case 'finance': contentHTML = renderFinance(); break
-        case 'notifications': contentHTML = renderNotifications(); break
-        case 'settings': contentHTML = renderSettings(); break
+        case 'merchants': contentHTML = hasPermission('merchants') ? renderMerchants() : renderNoPermission(); break
+        case 'orders': contentHTML = hasPermission('orders') ? renderOrders() : renderNoPermission(); break
+        case 'rooms': contentHTML = hasPermission('rooms') ? renderRooms() : renderNoPermission(); break
+        case 'users': contentHTML = hasPermission('users') ? renderUsers() : renderNoPermission(); break
+        case 'reviews': contentHTML = hasPermission('reviews') ? renderReviews() : renderNoPermission(); break
+        case 'marketing': contentHTML = hasPermission('marketing') ? renderMarketing() : renderNoPermission(); break
+        case 'finance': contentHTML = hasPermission('finance') ? renderFinance() : renderNoPermission(); break
+        case 'notifications': contentHTML = hasPermission('notifications') ? renderNotifications() : renderNoPermission(); break
+        case 'accounts': contentHTML = hasPermission('accounts') ? renderAccounts() : renderNoPermission(); break
+        case 'permissions': contentHTML = hasPermission('permissions') ? renderPermissions() : renderNoPermission(); break
+        case 'settings': contentHTML = hasPermission('settings') ? renderSettings() : renderNoPermission(); break
         default: contentHTML = renderDashboard()
       }
+      
+      const userRole = state.currentUser ? roles[state.currentUser.role] : null
+      const roleName = userRole ? userRole.name : ''
       
       return `
         <div class="layout">
@@ -518,7 +594,7 @@
               <p>智慧管理后台 v3.0</p>
             </div>
             <div class="sidebar-menu">
-              ${menuItems.map(item => `
+              ${userMenuItems.map(item => `
                 <div class="menu-item ${state.currentPage === item.key ? 'active' : ''}" onclick="goPage('${item.key}')">
                   <span class="menu-icon">${item.icon}</span>
                   <span>${item.label}</span>
@@ -527,6 +603,10 @@
               `).join('')}
             </div>
             <div style="padding:16px;border-top:1px solid rgba(255,255,255,0.1)">
+              <div style="font-size:12px;color:rgba(255,255,255,0.5);margin-bottom:8px;padding:0 8px">
+                <div>👤 ${state.currentUser ? state.currentUser.name : '未登录'}</div>
+                <div style="margin-top:4px">🏷️ ${roleName}</div>
+              </div>
               <div class="menu-item" onclick="doLogout()" style="color:#D46B6B">
                 <span class="menu-icon">🚪</span>
                 <span>退出登录</span>
@@ -538,6 +618,7 @@
               <h3>${currentMenu.icon} ${currentMenu.label}</h3>
               <div class="top-bar-right">
                 <span class="top-bar-time">${state.currentTime}</span>
+                <span style="font-size:13px;color:#666;margin-right:8px">👤 ${state.currentUser ? state.currentUser.name : ''} | ${roleName}</span>
                 <button class="top-bar-btn" onclick="goPage('dashboard')">🔄 刷新</button>
                 <button class="top-bar-btn logout" onclick="doLogout()">🚪 退出</button>
               </div>
@@ -1397,7 +1478,201 @@
       `
     }
     
-    // ====== 弹窗渲染 ======
+    // ====== 无权限页面 ======
+    function renderNoPermission() {
+      return `
+        <div class="empty-state" style="padding:80px 20px">
+          <div style="font-size:64px;margin-bottom:20px">🚫</div>
+          <div style="font-size:18px;color:#333;margin-bottom:12px">无权访问</div>
+          <div style="color:#999">您当前的角色没有权限访问此页面</div>
+          <div style="margin-top:24px">
+            <button class="table-btn primary" onclick="goPage('dashboard')">返回首页</button>
+          </div>
+        </div>
+      `
+    }
+    
+    // ====== 账号管理页面 ======
+    function renderAccounts() {
+      const currentRole = state.currentUser ? state.currentUser.role : ''
+      const isSuperAdmin = currentRole === 'superadmin'
+      
+      return `
+        <div class="table-card">
+          <div class="table-header">
+            <div class="table-title">👥 账号管理</div>
+            <div class="table-actions">
+              ${isSuperAdmin ? `<button class="table-btn primary" onclick="openModal('add-account')">+ 添加账号</button>` : ''}
+            </div>
+          </div>
+          <div class="filter-bar">
+            <input type="text" class="filter-input" placeholder="搜索用户名/姓名">
+            <select class="filter-select">
+              <option>全部角色</option>
+              <option>超级管理员</option>
+              <option>管理员</option>
+              <option>运营专员</option>
+              <option>财务人员</option>
+              <option>客服人员</option>
+            </select>
+            <select class="filter-select">
+              <option>全部状态</option>
+              <option>正常</option>
+              <option>已禁用</option>
+            </select>
+          </div>
+          <table class="table">
+            <thead>
+              <tr>
+                <th>账号信息</th>
+                <th>角色</th>
+                <th>手机号</th>
+                <th>邮箱</th>
+                <th>创建时间</th>
+                <th>状态</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${accounts.map(a => `
+                <tr>
+                  <td>
+                    <strong>${a.name}</strong><br>
+                    <small style="color:#999">${a.username}</small>
+                  </td>
+                  <td><span class="tag tag-${a.role === 'superadmin' ? 'danger' : a.role === 'admin' ? 'warning' : 'info'}">${roles[a.role].name}</span></td>
+                  <td>${a.phone}</td>
+                  <td>${a.email}</td>
+                  <td>${formatTime(a.created_at)}</td>
+                  <td><span class="tag tag-${a.status === 'active' ? 'success' : 'danger'}">${a.status === 'active' ? '正常' : '已禁用'}</span></td>
+                  <td>
+                    <div class="row-actions">
+                      ${isSuperAdmin && a.id !== state.currentUser.id ? `
+                        <button class="row-btn info" onclick="openModal('edit-account', ${a.id})">编辑</button>
+                        ${a.status === 'active' ? `<button class="row-btn warning" onclick="toggleAccountStatus(${a.id})">禁用</button>` : `<button class="row-btn success" onclick="toggleAccountStatus(${a.id})">启用</button>`}
+                        <button class="row-btn danger" onclick="deleteAccount(${a.id})">删除</button>
+                      ` : '<span style="color:#999;font-size:12px">无权限</span>'}
+                    </div>
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+        
+        <div class="table-card" style="margin-top:20px">
+          <div class="table-header">
+            <div class="table-title">📋 角色说明</div>
+          </div>
+          <div style="padding:16px">
+            <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:16px">
+              <div style="background:#f9f9f9;border-radius:8px;padding:16px">
+                <div style="font-weight:bold;margin-bottom:8px"><span class="tag tag-danger">超级管理员</span></div>
+                <div style="font-size:13px;color:#666">拥有所有权限，包括账号管理、权限设置等高级功能</div>
+              </div>
+              <div style="background:#f9f9f9;border-radius:8px;padding:16px">
+                <div style="font-weight:bold;margin-bottom:8px"><span class="tag tag-warning">管理员</span></div>
+                <div style="font-size:13px;color:#666">拥有大部分管理权限，但不能管理账号和权限</div>
+              </div>
+              <div style="background:#f9f9f9;border-radius:8px;padding:16px">
+                <div style="font-weight:bold;margin-bottom:8px"><span class="tag tag-info">运营专员</span></div>
+                <div style="font-size:13px;color:#666">负责商家、订单、会员、评价、营销等日常运营</div>
+              </div>
+              <div style="background:#f9f9f9;border-radius:8px;padding:16px">
+                <div style="font-weight:bold;margin-bottom:8px"><span class="tag tag-success">财务人员</span></div>
+                <div style="font-size:13px;color:#666">负责订单查看、财务报表、数据导出</div>
+              </div>
+              <div style="background:#f9f9f9;border-radius:8px;padding:16px">
+                <div style="font-weight:bold;margin-bottom:8px"><span class="tag tag-purple">客服人员</span></div>
+                <div style="font-size:13px;color:#666">负责订单处理、会员服务、评价回复</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `
+    }
+    
+    // ====== 权限设置页面 ======
+    function renderPermissions() {
+      const permissionLabels = {
+        dashboard: '数据概览',
+        merchants: '商家管理',
+        orders: '订单管理',
+        rooms: '房型管理',
+        users: '会员管理',
+        reviews: '评价管理',
+        marketing: '营销活动',
+        finance: '财务报表',
+        notifications: '消息通知',
+        accounts: '账号管理',
+        permissions: '权限设置',
+        settings: '系统设置'
+      }
+      
+      return `
+        <div class="table-card">
+          <div class="table-header">
+            <div class="table-title">🔐 权限设置</div>
+            <div class="table-actions">
+              <button class="table-btn primary" onclick="savePermissions()">💾 保存权限配置</button>
+            </div>
+          </div>
+          <div style="padding:16px">
+            <div style="margin-bottom:20px;color:#666;font-size:14px">
+              勾选每个角色可以访问的页面，保存后即时生效。
+            </div>
+            <table class="table">
+              <thead>
+                <tr>
+                  <th style="width:150px">页面/功能</th>
+                  <th><span class="tag tag-danger">超级管理员</span></th>
+                  <th><span class="tag tag-warning">管理员</span></th>
+                  <th><span class="tag tag-info">运营专员</span></th>
+                  <th><span class="tag tag-success">财务人员</span></th>
+                  <th><span class="tag tag-purple">客服人员</span></th>
+                </tr>
+              </thead>
+              <tbody>
+                ${Object.keys(permissionLabels).map(key => `
+                  <tr>
+                    <td><strong>${permissionLabels[key]}</strong></td>
+                    <td style="text-align:center"><input type="checkbox" checked disabled title="超级管理员拥有所有权限"></td>
+                    <td style="text-align:center"><input type="checkbox" ${roles.admin.permissions.includes(key) ? 'checked' : ''} onchange="toggleRolePermission('admin', '${key}')"></td>
+                    <td style="text-align:center"><input type="checkbox" ${roles.operator.permissions.includes(key) ? 'checked' : ''} onchange="toggleRolePermission('operator', '${key}')"></td>
+                    <td style="text-align:center"><input type="checkbox" ${roles.finance.permissions.includes(key) ? 'checked' : ''} onchange="toggleRolePermission('finance', '${key}')"></td>
+                    <td style="text-align:center"><input type="checkbox" ${roles.customer_service.permissions.includes(key) ? 'checked' : ''} onchange="toggleRolePermission('customer_service', '${key}')"></td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+        
+        <div class="table-card" style="margin-top:20px">
+          <div class="table-header">
+            <div class="table-title">📋 当前在线账号</div>
+          </div>
+          <table class="table">
+            <thead>
+              <tr>
+                <th>账号</th>
+                <th>角色</th>
+                <th>登录时间</th>
+                <th>状态</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>${state.currentUser ? state.currentUser.name : '-'}</strong></td>
+                <td><span class="tag tag-danger">${state.currentUser ? roles[state.currentUser.role].name : '-'}</span></td>
+                <td>${state.currentTime}</td>
+                <td><span class="tag tag-success">在线</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      `
+    }
     function renderModal() {
       let modalContent = ''
       
@@ -2050,6 +2325,105 @@
             </div>
           </div>
         `
+      } else if (state.modal === 'add-account') {
+        modalContent = `
+          <div class="modal-overlay" onclick="if(event.target===this)closeModal()">
+            <div class="modal-content" style="max-width:500px">
+              <div class="modal-header">
+                <div class="modal-title">👤 添加账号</div>
+                <div class="modal-close" onclick="closeModal()">&times;</div>
+              </div>
+              <div class="modal-body">
+                <div class="detail-row">
+                  <div class="detail-label"><span style="color:red">*</span>用户名</div>
+                  <div class="detail-value"><input type="text" id="acc-username" class="filter-input" placeholder="登录用户名" style="width:180px"></div>
+                </div>
+                <div class="detail-row">
+                  <div class="detail-label"><span style="color:red">*</span>密码</div>
+                  <div class="detail-value"><input type="password" id="acc-password" class="filter-input" placeholder="登录密码" style="width:180px"></div>
+                </div>
+                <div class="detail-row">
+                  <div class="detail-label"><span style="color:red">*</span>姓名</div>
+                  <div class="detail-value"><input type="text" id="acc-name" class="filter-input" placeholder="真实姓名" style="width:150px"></div>
+                </div>
+                <div class="detail-row">
+                  <div class="detail-label"><span style="color:red">*</span>角色</div>
+                  <div class="detail-value">
+                    <select id="acc-role" class="filter-select" style="width:150px">
+                      <option value="admin">管理员</option>
+                      <option value="operator">运营专员</option>
+                      <option value="finance">财务人员</option>
+                      <option value="customer_service">客服人员</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="detail-row">
+                  <div class="detail-label">手机号</div>
+                  <div class="detail-value"><input type="tel" id="acc-phone" class="filter-input" placeholder="手机号码" style="width:150px"></div>
+                </div>
+                <div class="detail-row">
+                  <div class="detail-label">邮箱</div>
+                  <div class="detail-value"><input type="email" id="acc-email" class="filter-input" placeholder="邮箱地址" style="width:200px"></div>
+                </div>
+              </div>
+              <div class="modal-footer">
+                <button class="table-btn" onclick="closeModal()">取消</button>
+                <button class="table-btn primary" onclick="saveNewAccount()">添加账号</button>
+              </div>
+            </div>
+          </div>
+        `
+      } else if (state.modal === 'edit-account') {
+        const account = accounts.find(a => a.id === state.modalData)
+        if (account) {
+          modalContent = `
+            <div class="modal-overlay" onclick="if(event.target===this)closeModal()">
+              <div class="modal-content" style="max-width:500px">
+                <div class="modal-header">
+                  <div class="modal-title">✏️ 编辑账号</div>
+                  <div class="modal-close" onclick="closeModal()">&times;</div>
+                </div>
+                <div class="modal-body">
+                  <div class="detail-row">
+                    <div class="detail-label">用户名</div>
+                    <div class="detail-value"><strong>${account.username}</strong></div>
+                  </div>
+                  <div class="detail-row">
+                    <div class="detail-label"><span style="color:red">*</span>姓名</div>
+                    <div class="detail-value"><input type="text" id="edit-acc-name" class="filter-input" value="${account.name}" style="width:150px"></div>
+                  </div>
+                  <div class="detail-row">
+                    <div class="detail-label"><span style="color:red">*</span>角色</div>
+                    <div class="detail-value">
+                      <select id="edit-acc-role" class="filter-select" style="width:150px">
+                        <option value="admin" ${account.role === 'admin' ? 'selected' : ''}>管理员</option>
+                        <option value="operator" ${account.role === 'operator' ? 'selected' : ''}>运营专员</option>
+                        <option value="finance" ${account.role === 'finance' ? 'selected' : ''}>财务人员</option>
+                        <option value="customer_service" ${account.role === 'customer_service' ? 'selected' : ''}>客服人员</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="detail-row">
+                    <div class="detail-label">手机号</div>
+                    <div class="detail-value"><input type="tel" id="edit-acc-phone" class="filter-input" value="${account.phone}" style="width:150px"></div>
+                  </div>
+                  <div class="detail-row">
+                    <div class="detail-label">邮箱</div>
+                    <div class="detail-value"><input type="email" id="edit-acc-email" class="filter-input" value="${account.email}" style="width:200px"></div>
+                  </div>
+                  <div class="detail-row">
+                    <div class="detail-label">重置密码</div>
+                    <div class="detail-value"><input type="password" id="edit-acc-newpass" class="filter-input" placeholder="不填则不修改" style="width:180px"></div>
+                  </div>
+                </div>
+                <div class="modal-footer">
+                  <button class="table-btn" onclick="closeModal()">取消</button>
+                  <button class="table-btn primary" onclick="saveEditAccount(${account.id})">保存修改</button>
+                </div>
+              </div>
+            </div>
+          `
+        }
       } else if (state.modal === 'refund') {
         const order = state.orders.find(o => o.id === state.modalData)
         if (order) {
@@ -2341,6 +2715,126 @@
         render()
         alert(`✅ 退款成功！\n\n退款金额：¥${amount}\n退款原因：${reason}\n\n资金将在1-7个工作日内原路返回给客户。`)
       }
+    }
+    
+    // ====== 账号管理功能 ======
+    function toggleAccountStatus(id) {
+      const account = accounts.find(a => a.id === id)
+      if (!account) return
+      
+      if (account.id === state.currentUser.id) {
+        alert('不能禁用当前登录的账号！')
+        return
+      }
+      
+      const action = account.status === 'active' ? '禁用' : '启用'
+      if (confirm(`确定要${action}账号 "${account.name}" 吗？`)) {
+        account.status = account.status === 'active' ? 'inactive' : 'active'
+        render()
+        alert(`账号已${action}！`)
+      }
+    }
+    
+    function deleteAccount(id) {
+      const account = accounts.find(a => a.id === id)
+      if (!account) return
+      
+      if (account.id === state.currentUser.id) {
+        alert('不能删除当前登录的账号！')
+        return
+      }
+      
+      if (confirm(`确定要删除账号 "${account.name}" 吗？\n\n此操作不可恢复！`)) {
+        const index = accounts.findIndex(a => a.id === id)
+        if (index > -1) {
+          accounts.splice(index, 1)
+          render()
+          alert('账号已删除！')
+        }
+      }
+    }
+    
+    // ====== 权限设置功能 ======
+    function toggleRolePermission(roleKey, permission) {
+      const role = roles[roleKey]
+      if (!role) return
+      
+      const index = role.permissions.indexOf(permission)
+      if (index > -1) {
+        role.permissions.splice(index, 1)
+      } else {
+        role.permissions.push(permission)
+      }
+    }
+    
+    function savePermissions() {
+      alert('权限配置已保存！\n\n注意：当前登录账号的权限变更将在下次登录时生效。')
+      render()
+    }
+    
+    function saveNewAccount() {
+      const username = document.getElementById('acc-username').value.trim()
+      const password = document.getElementById('acc-password').value.trim()
+      const name = document.getElementById('acc-name').value.trim()
+      const role = document.getElementById('acc-role').value
+      const phone = document.getElementById('acc-phone').value.trim()
+      const email = document.getElementById('acc-email').value.trim()
+      
+      if (!username || !password || !name) {
+        alert('请填写必填项（用户名、密码、姓名）')
+        return
+      }
+      
+      if (accounts.find(a => a.username === username)) {
+        alert('用户名已存在！')
+        return
+      }
+      
+      const newAccount = {
+        id: Date.now(),
+        username,
+        password,
+        name,
+        role,
+        phone: phone || '-',
+        email: email || '-',
+        status: 'active',
+        created_at: new Date().toISOString()
+      }
+      
+      accounts.push(newAccount)
+      closeModal()
+      render()
+      alert('账号添加成功！')
+    }
+    
+    function saveEditAccount(id) {
+      const account = accounts.find(a => a.id === id)
+      if (!account) return
+      
+      const name = document.getElementById('edit-acc-name').value.trim()
+      const role = document.getElementById('edit-acc-role').value
+      const phone = document.getElementById('edit-acc-phone').value.trim()
+      const email = document.getElementById('edit-acc-email').value.trim()
+      const newPass = document.getElementById('edit-acc-newpass').value.trim()
+      
+      if (!name) {
+        alert('姓名不能为空！')
+        return
+      }
+      
+      account.name = name
+      account.role = role
+      account.phone = phone || account.phone
+      account.email = email || account.email
+      
+      if (newPass) {
+        account.password = newPass
+      }
+      
+      closeModal()
+      render()
+      alert('账号信息已更新！')
     }
     
     // ====== 初始化 ======
