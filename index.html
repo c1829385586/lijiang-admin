@@ -311,6 +311,23 @@
       else if (key === 'rooms') loadRooms()
       else if (key === 'users') loadUsers()
       else if (key === 'reviews') loadReviews()
+      else if (key === 'notifications') loadNotifications()
+    }
+    
+    function loadNotifications() {
+      // 通知数据已在初始化时加载，这里可以刷新
+      render()
+    }
+    
+    function markAllRead() {
+      state.notifications.forEach(n => n.read = true)
+      render()
+    }
+    
+    function markAsRead(id) {
+      const notif = state.notifications.find(n => n.id === id)
+      if (notif) notif.read = true
+      render()
     }
     
     // ====== 弹窗控制 ======
@@ -1139,28 +1156,110 @@
     
     // ====== 消息通知页面 ======
     function renderNotifications() {
+      const unreadCount = state.notifications.filter(n => !n.read).length
+      
       return `
+        <div class="filter-bar" style="margin-bottom:16px">
+          <div style="display:flex;align-items:center;gap:8px">
+            <span class="tag tag-danger" style="padding:4px 10px">${unreadCount} 条未读</span>
+          </div>
+          <button class="table-btn primary" onclick="markAllRead()">✓ 全部标为已读</button>
+        </div>
+        
         <div class="table-card">
           <div class="table-header">
-            <div class="table-title">消息通知</div>
-            <div class="table-actions">
-              <button class="table-btn">全部已读</button>
-            </div>
+            <div class="table-title">📬 全部消息</div>
           </div>
-          <div class="timeline" style="padding:20px">
+          <div style="padding:0">
             ${state.notifications.map(n => `
-              <div class="timeline-item" style="opacity:${n.read ? 0.6 : 1}">
-                <div class="timeline-time">${n.time}</div>
-                <div class="timeline-content">
-                  <strong>${n.title}</strong><br>
-                  ${n.content}
-                  ${!n.read ? '<span style="color:#E8885A;font-size:12px;margin-left:8px">● 未读</span>' : ''}
+              <div class="notification-item ${n.read ? 'read' : 'unread'}" onclick="markAsRead(${n.id})" style="
+                padding:16px 20px;
+                border-bottom:1px solid #f0f0f0;
+                cursor:pointer;
+                transition:background 0.2s;
+                display:flex;
+                gap:16px;
+                align-items:flex-start;
+                ${!n.read ? 'background:#FFF9F5;' : ''}
+              " onmouseover="this.style.background=${n.read ? '#fafafa' : '#FFF5EE'}" onmouseout="this.style.background=${n.read ? 'transparent' : '#FFF9F5'}">
+                <div style="font-size:24px;flex-shrink:0;margin-top:2px">${getNotificationIcon(n.title)}</div>
+                <div style="flex:1;min-width:0">
+                  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+                    <strong style="font-size:15px;color:#333">${n.title}</strong>
+                    <span style="font-size:12px;color:#999;white-space:nowrap">${n.time}</span>
+                  </div>
+                  <div style="font-size:14px;color:#666;margin-bottom:6px">${n.content}</div>
+                  ${!n.read ? '<span style="display:inline-block;width:8px;height:8px;background:#E8885A;border-radius:50%"></span>' : ''}
                 </div>
               </div>
             `).join('')}
+            ${state.notifications.length === 0 ? `
+              <div class="empty-state">
+                <div style="font-size:48px;margin-bottom:16px">📭</div>
+                <div>暂无消息通知</div>
+              </div>
+            ` : ''}
           </div>
         </div>
+        
+        <div class="table-card" style="margin-top:20px">
+          <div class="table-header">
+            <div class="table-title">📋 历史通知</div>
+          </div>
+          <table class="table">
+            <thead>
+              <tr>
+                <th>时间</th>
+                <th>类型</th>
+                <th>内容摘要</th>
+                <th>状态</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>2026-04-28 14:30</td>
+                <td><span class="tag tag-success">系统</span></td>
+                <td>五一假期营销活动已开始</td>
+                <td><span class="tag tag-info">已读</span></td>
+              </tr>
+              <tr>
+                <td>2026-04-27 10:15</td>
+                <td><span class="tag tag-warning">订单</span></td>
+                <td>昨日订单量创新高，达328单</td>
+                <td><span class="tag tag-info">已读</span></td>
+              </tr>
+              <tr>
+                <td>2026-04-26 09:00</td>
+                <td><span class="tag tag-danger">审核</span></td>
+                <td>3家商家待审核，请及时处理</td>
+                <td><span class="tag tag-info">已读</span></td>
+              </tr>
+              <tr>
+                <td>2026-04-25 16:45</td>
+                <td><span class="tag tag-success">系统</span></td>
+                <td>系统升级完成，功能已优化</td>
+                <td><span class="tag tag-info">已读</span></td>
+              </tr>
+              <tr>
+                <td>2026-04-24 11:20</td>
+                <td><span class="tag tag-warning">订单</span></td>
+                <td>收到新订单 ORD20260424056</td>
+                <td><span class="tag tag-info">已读</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       `
+    }
+    
+    function getNotificationIcon(title) {
+      if (title.includes('订单')) return '📦'
+      if (title.includes('商家') || title.includes('入驻')) return '🏪'
+      if (title.includes('系统') || title.includes('公告')) return '📢'
+      if (title.includes('会员') || title.includes('用户')) return '👤'
+      if (title.includes('评价') || title.includes('投诉')) return '⭐'
+      if (title.includes('财务') || title.includes('退款')) return '💰'
+      return '🔔'
     }
     
     // ====== 系统设置页面 ======
