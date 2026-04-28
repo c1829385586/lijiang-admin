@@ -330,6 +330,45 @@
       render()
     }
     
+    function clickNotification(id) {
+      const notif = state.notifications.find(n => n.id === id)
+      if (!notif) return
+      
+      // 标记为已读
+      notif.read = true
+      
+      // 根据通知类型跳转到对应页面
+      const title = notif.title
+      if (title.includes('订单') || title.includes('新订单') || title.includes('退款')) {
+        // 跳转到订单管理
+        goPage('orders')
+        // 打开订单详情
+        setTimeout(() => {
+          const order = state.orders[0] // 默认打开第一个订单
+          if (order) {
+            state.modal = 'order'
+            state.modalData = order.id
+            render()
+          }
+        }, 100)
+      } else if (title.includes('商家') || title.includes('入驻') || title.includes('审核')) {
+        // 跳转到商家管理
+        goPage('merchants')
+      } else if (title.includes('会员') || title.includes('用户')) {
+        // 跳转到会员管理
+        goPage('users')
+      } else if (title.includes('评价') || title.includes('投诉')) {
+        // 跳转到评价管理
+        goPage('reviews')
+      } else if (title.includes('财务')) {
+        // 跳转到财务报表
+        goPage('finance')
+      } else {
+        // 默认刷新当前页面
+        render()
+      }
+    }
+    
     // ====== 弹窗控制 ======
     function openModal(type, data) {
       state.modal = type
@@ -1172,7 +1211,7 @@
           </div>
           <div style="padding:0">
             ${state.notifications.map(n => `
-              <div class="notification-item ${n.read ? 'read' : 'unread'}" onclick="markAsRead(${n.id})" style="
+              <div class="notification-item ${n.read ? 'read' : 'unread'}" style="
                 padding:16px 20px;
                 border-bottom:1px solid #f0f0f0;
                 cursor:pointer;
@@ -1181,15 +1220,18 @@
                 gap:16px;
                 align-items:flex-start;
                 ${!n.read ? 'background:#FFF9F5;' : ''}
-              " onmouseover="this.style.background=${n.read ? '#fafafa' : '#FFF5EE'}" onmouseout="this.style.background=${n.read ? 'transparent' : '#FFF9F5'}">
+              " onmouseover="this.style.background=${n.read ? '#fafafa' : '#FFF5EE'}" onmouseout="this.style.background=${n.read ? 'transparent' : '#FFF9F5'}" onclick="clickNotification(${n.id})">
                 <div style="font-size:24px;flex-shrink:0;margin-top:2px">${getNotificationIcon(n.title)}</div>
                 <div style="flex:1;min-width:0">
                   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
                     <strong style="font-size:15px;color:#333">${n.title}</strong>
                     <span style="font-size:12px;color:#999;white-space:nowrap">${n.time}</span>
                   </div>
-                  <div style="font-size:14px;color:#666;margin-bottom:6px">${n.content}</div>
-                  ${!n.read ? '<span style="display:inline-block;width:8px;height:8px;background:#E8885A;border-radius:50%"></span>' : ''}
+                  <div style="font-size:14px;color:#666;margin-bottom:8px">${n.content}</div>
+                  <div style="display:flex;gap:8px;align-items:center">
+                    ${!n.read ? '<span style="display:inline-block;width:8px;height:8px;background:#E8885A;border-radius:50%;flex-shrink:0"></span>' : ''}
+                    <span style="font-size:12px;color:#E8885A;cursor:pointer" onclick="event.stopPropagation();clickNotification(${n.id})">查看详情 →</span>
+                  </div>
                 </div>
               </div>
             `).join('')}
