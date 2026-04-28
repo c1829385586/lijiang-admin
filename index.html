@@ -725,7 +725,7 @@
             <div class="table-title">商家管理</div>
             <div class="table-actions">
               <button class="table-btn" onclick="exportData('merchants')">📥 导出</button>
-              <button class="table-btn primary">+ 添加商家</button>
+              <button class="table-btn primary" onclick="openModal('add-merchant')">+ 添加商家</button>
             </div>
           </div>
           <div class="tabs">
@@ -770,8 +770,8 @@
                   <td>
                     <div class="row-actions">
                       <button class="row-btn info" onclick="openModal('merchant', ${m.id})">详情</button>
-                      ${m.status === 0 ? `<button class="row-btn success">通过</button><button class="row-btn danger">拒绝</button>` : ''}
-                      ${m.status === 1 ? `<button class="row-btn warning">禁用</button>` : ''}
+                      ${m.status === 0 ? `<button class="row-btn success" onclick="approveMerchant(${m.id})">通过</button><button class="row-btn danger" onclick="rejectMerchant(${m.id})">拒绝</button>` : ''}
+                      ${m.status === 1 ? `<button class="row-btn warning" onclick="disableMerchant(${m.id})">禁用</button>` : ''}
                     </div>
                   </td>
                 </tr>
@@ -797,7 +797,7 @@
             <div class="table-title">订单管理</div>
             <div class="table-actions">
               <button class="table-btn" onclick="exportData('orders')">📥 导出</button>
-              <button class="table-btn primary">+ 手动下单</button>
+              <button class="table-btn primary" onclick="openModal('add-order')">+ 手动下单</button>
             </div>
           </div>
           <div class="tabs">
@@ -841,8 +841,8 @@
                   <td>
                     <div class="row-actions">
                       <button class="row-btn info" onclick="openModal('order', ${o.id})">详情</button>
-                      ${o.status === 'pending' ? `<button class="row-btn success">确认</button>` : ''}
-                      ${o.status === 'paid' ? `<button class="row-btn warning">完成</button>` : ''}
+                      ${o.status === 'pending' ? `<button class="row-btn success" onclick="confirmOrder(${o.id})">确认</button>` : ''}
+                      ${o.status === 'paid' ? `<button class="row-btn warning" onclick="completeOrder(${o.id})">完成</button>` : ''}
                     </div>
                   </td>
                 </tr>
@@ -861,7 +861,7 @@
             <div class="table-title">房型管理</div>
             <div class="table-actions">
               <button class="table-btn" onclick="exportData('rooms')">📥 导出</button>
-              <button class="table-btn primary">+ 添加房型</button>
+              <button class="table-btn primary" onclick="openModal('add-room')">+ 添加房型</button>
             </div>
           </div>
           <div class="stat-cards" style="margin-bottom:16px">
@@ -1019,8 +1019,8 @@
                   <td><span class="tag tag-${r.status === 'approved' ? 'success' : r.status === 'pending' ? 'warning' : 'danger'}">${r.status === 'approved' ? '已通过' : r.status === 'pending' ? '待审核' : '已拒绝'}</span></td>
                   <td>
                     <div class="row-actions">
-                      ${r.status === 'pending' ? `<button class="row-btn success">通过</button><button class="row-btn danger">拒绝</button>` : ''}
-                      <button class="row-btn info">回复</button>
+                      ${r.status === 'pending' ? `<button class="row-btn success" onclick="approveReview(${r.id})">通过</button><button class="row-btn danger" onclick="rejectReview(${r.id})">拒绝</button>` : ''}
+                      <button class="row-btn info" onclick="openModal('review', ${r.id})">回复</button>
                     </div>
                   </td>
                 </tr>
@@ -1057,7 +1057,7 @@
           <div class="table-header">
             <div class="table-title">营销活动</div>
             <div class="table-actions">
-              <button class="table-btn primary">+ 创建活动</button>
+              <button class="table-btn primary" onclick="openModal('add-campaign')">+ 创建活动</button>
             </div>
           </div>
           <table class="table">
@@ -1080,7 +1080,7 @@
                 <td>56</td>
                 <td>2,340</td>
                 <td><span class="tag tag-success">进行中</span></td>
-                <td><div class="row-actions"><button class="row-btn info">详情</button><button class="row-btn warning">编辑</button></div></td>
+                <td><div class="row-actions"><button class="row-btn info" onclick="openModal('campaign', 1)">详情</button><button class="row-btn warning" onclick="openModal('edit-campaign', 1)">编辑</button></div></td>
               </tr>
               <tr>
                 <td><strong>新用户专享</strong></td>
@@ -1089,7 +1089,7 @@
                 <td>全平台</td>
                 <td>1,890</td>
                 <td><span class="tag tag-success">进行中</span></td>
-                <td><div class="row-actions"><button class="row-btn info">详情</button><button class="row-btn warning">编辑</button></div></td>
+                <td><div class="row-actions"><button class="row-btn info" onclick="openModal('campaign', 2)">详情</button><button class="row-btn warning" onclick="openModal('edit-campaign', 2)">编辑</button></div></td>
               </tr>
               <tr>
                 <td><strong>春季赏花季</strong></td>
@@ -1098,7 +1098,7 @@
                 <td>32</td>
                 <td>3,560</td>
                 <td><span class="tag tag-info">已结束</span></td>
-                <td><div class="row-actions"><button class="row-btn info">详情</button></div></td>
+                <td><div class="row-actions"><button class="row-btn info" onclick="openModal('campaign', 3)">详情</button></div></td>
               </tr>
             </tbody>
           </table>
@@ -1313,17 +1313,17 @@
             <div class="setting-card">
               <div class="name">修改密码</div>
               <div class="desc">定期更换密码可以提高账号安全性</div>
-              <div class="side" style="margin-top:12px"><button class="table-btn">修改</button></div>
+              <div class="side" style="margin-top:12px"><button class="table-btn" onclick="openModal('change-password')">修改</button></div>
             </div>
             <div class="setting-card">
               <div class="name">登录日志</div>
               <div class="desc">查看最近登录记录</div>
-              <div class="side" style="margin-top:12px"><button class="table-btn">查看</button></div>
+              <div class="side" style="margin-top:12px"><button class="table-btn" onclick="openModal('login-logs')">查看</button></div>
             </div>
             <div class="setting-card">
               <div class="name">双重认证</div>
               <div class="desc">开启后登录需要手机验证码</div>
-              <div class="side" style="margin-top:12px"><button class="table-btn">开启</button></div>
+              <div class="side" style="margin-top:12px"><button class="table-btn" onclick="toggle2FA()">开启</button></div>
             </div>
           </div>
         </div>
@@ -1675,6 +1675,379 @@
             </div>
           `
         }
+      } else if (state.modal === 'add-merchant') {
+        modalContent = `
+          <div class="modal-overlay" onclick="if(event.target===this)closeModal()">
+            <div class="modal-content" style="max-width:600px">
+              <div class="modal-header">
+                <div class="modal-title">🏪 添加商家</div>
+                <div class="modal-close" onclick="closeModal()">&times;</div>
+              </div>
+              <div class="modal-body">
+                <div class="detail-row">
+                  <div class="detail-label"><span style="color:red">*</span>商家名称</div>
+                  <div class="detail-value"><input type="text" class="filter-input" placeholder="请输入商家名称" style="width:200px"></div>
+                </div>
+                <div class="detail-row">
+                  <div class="detail-label"><span style="color:red">*</span>商家类型</div>
+                  <div class="detail-value">
+                    <select class="filter-select" style="width:150px">
+                      <option>酒店民宿</option>
+                      <option>美食餐饮</option>
+                      <option>旅游景点</option>
+                      <option>特产商品</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="detail-row">
+                  <div class="detail-label"><span style="color:red">*</span>联系人</div>
+                  <div class="detail-value"><input type="text" class="filter-input" placeholder="联系人姓名" style="width:150px"></div>
+                </div>
+                <div class="detail-row">
+                  <div class="detail-label"><span style="color:red">*</span>联系电话</div>
+                  <div class="detail-value"><input type="tel" class="filter-input" placeholder="手机号码" style="width:150px"></div>
+                </div>
+                <div class="detail-row">
+                  <div class="detail-label"><span style="color:red">*</span>商家地址</div>
+                  <div class="detail-value"><input type="text" class="filter-input" placeholder="详细地址" style="width:300px"></div>
+                </div>
+                <div class="detail-row">
+                  <div class="detail-label">营业执照</div>
+                  <div class="detail-value"><input type="file" accept="image/*"></div>
+                </div>
+                <div class="detail-row">
+                  <div class="detail-label">商家介绍</div>
+                  <div class="detail-value"><textarea class="filter-input" rows="3" placeholder="请输入商家介绍" style="width:300px;resize:vertical"></textarea></div>
+                </div>
+              </div>
+              <div class="modal-footer">
+                <button class="table-btn" onclick="closeModal()">取消</button>
+                <button class="table-btn primary" onclick="saveNewMerchant()">提交审核</button>
+              </div>
+            </div>
+          </div>
+        `
+      } else if (state.modal === 'add-order') {
+        modalContent = `
+          <div class="modal-overlay" onclick="if(event.target===this)closeModal()">
+            <div class="modal-content" style="max-width:600px">
+              <div class="modal-header">
+                <div class="modal-title">📋 手动创建订单</div>
+                <div class="modal-close" onclick="closeModal()">&times;</div>
+              </div>
+              <div class="modal-body">
+                <div class="detail-row">
+                  <div class="detail-label"><span style="color:red">*</span>选择商家</div>
+                  <div class="detail-value">
+                    <select class="filter-select" style="width:200px">
+                      <option>丽江古城客栈</option>
+                      <option>泸沽湖民宿</option>
+                      <option>束河古镇酒店</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="detail-row">
+                  <div class="detail-label"><span style="color:red">*</span>客户姓名</div>
+                  <div class="detail-value"><input type="text" class="filter-input" placeholder="客户姓名" style="width:150px"></div>
+                </div>
+                <div class="detail-row">
+                  <div class="detail-label"><span style="color:red">*</span>联系电话</div>
+                  <div class="detail-value"><input type="tel" class="filter-input" placeholder="手机号码" style="width:150px"></div>
+                </div>
+                <div class="detail-row">
+                  <div class="detail-label"><span style="color:red">*</span>入住日期</div>
+                  <div class="detail-value"><input type="date" class="filter-input" style="width:150px"></div>
+                </div>
+                <div class="detail-row">
+                  <div class="detail-label"><span style="color:red">*</span>退房日期</div>
+                  <div class="detail-value"><input type="date" class="filter-input" style="width:150px"></div>
+                </div>
+                <div class="detail-row">
+                  <div class="detail-label"><span style="color:red">*</span>订单金额</div>
+                  <div class="detail-value"><input type="number" class="filter-input" placeholder="0.00" style="width:120px"> 元</div>
+                </div>
+                <div class="detail-row">
+                  <div class="detail-label">备注</div>
+                  <div class="detail-value"><textarea class="filter-input" rows="2" placeholder="订单备注" style="width:300px"></textarea></div>
+                </div>
+              </div>
+              <div class="modal-footer">
+                <button class="table-btn" onclick="closeModal()">取消</button>
+                <button class="table-btn primary" onclick="saveNewOrder()">创建订单</button>
+              </div>
+            </div>
+          </div>
+        `
+      } else if (state.modal === 'add-room') {
+        modalContent = `
+          <div class="modal-overlay" onclick="if(event.target===this)closeModal()">
+            <div class="modal-content" style="max-width:600px">
+              <div class="modal-header">
+                <div class="modal-title">🏨 添加房型</div>
+                <div class="modal-close" onclick="closeModal()">&times;</div>
+              </div>
+              <div class="modal-body">
+                <div class="detail-row">
+                  <div class="detail-label"><span style="color:red">*</span>所属商家</div>
+                  <div class="detail-value">
+                    <select class="filter-select" style="width:200px">
+                      <option>丽江古城客栈</option>
+                      <option>泸沽湖民宿</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="detail-row">
+                  <div class="detail-label"><span style="color:red">*</span>房型名称</div>
+                  <div class="detail-value"><input type="text" class="filter-input" placeholder="如：豪华大床房" style="width:180px"></div>
+                </div>
+                <div class="detail-row">
+                  <div class="detail-label"><span style="color:red">*</span>房间类型</div>
+                  <div class="detail-value">
+                    <select class="filter-select" style="width:150px">
+                      <option>标准间</option>
+                      <option>大床房</option>
+                      <option>家庭房</option>
+                      <option>套房</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="detail-row">
+                  <div class="detail-label"><span style="color:red">*</span>价格(元/晚)</div>
+                  <div class="detail-value"><input type="number" class="filter-input" placeholder="0" style="width:100px"> 元</div>
+                </div>
+                <div class="detail-row">
+                  <div class="detail-label"><span style="color:red">*</span>房间数量</div>
+                  <div class="detail-value"><input type="number" class="filter-input" value="5" style="width:80px"> 间</div>
+                </div>
+                <div class="detail-row">
+                  <div class="detail-label">房间设施</div>
+                  <div class="detail-value">
+                    <label style="margin-right:16px"><input type="checkbox" checked> WiFi</label>
+                    <label style="margin-right:16px"><input type="checkbox" checked> 空调</label>
+                    <label style="margin-right:16px"><input type="checkbox" checked> 独立卫浴</label>
+                  </div>
+                </div>
+              </div>
+              <div class="modal-footer">
+                <button class="table-btn" onclick="closeModal()">取消</button>
+                <button class="table-btn primary" onclick="saveNewRoom()">添加房型</button>
+              </div>
+            </div>
+          </div>
+        `
+      } else if (state.modal === 'add-campaign') {
+        modalContent = `
+          <div class="modal-overlay" onclick="if(event.target===this)closeModal()">
+            <div class="modal-content" style="max-width:600px">
+              <div class="modal-header">
+                <div class="modal-title">🎯 创建营销活动</div>
+                <div class="modal-close" onclick="closeModal()">&times;</div>
+              </div>
+              <div class="modal-body">
+                <div class="detail-row">
+                  <div class="detail-label"><span style="color:red">*</span>活动名称</div>
+                  <div class="detail-value"><input type="text" class="filter-input" placeholder="活动名称" style="width:200px"></div>
+                </div>
+                <div class="detail-row">
+                  <div class="detail-label"><span style="color:red">*</span>活动类型</div>
+                  <div class="detail-value">
+                    <select class="filter-select" style="width:150px">
+                      <option>满减</option>
+                      <option>折扣</option>
+                      <option>优惠券</option>
+                      <option>赠品</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="detail-row">
+                  <div class="detail-label"><span style="color:red">*</span>开始时间</div>
+                  <div class="detail-value"><input type="date" class="filter-input" style="width:150px"></div>
+                </div>
+                <div class="detail-row">
+                  <div class="detail-label"><span style="color:red">*</span>结束时间</div>
+                  <div class="detail-value"><input type="date" class="filter-input" style="width:150px"></div>
+                </div>
+                <div class="detail-row">
+                  <div class="detail-label">参与商家</div>
+                  <div class="detail-value">
+                    <select class="filter-select" style="width:180px">
+                      <option>全部商家</option>
+                      <option>指定商家</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="detail-row">
+                  <div class="detail-label">活动说明</div>
+                  <div class="detail-value"><textarea class="filter-input" rows="3" placeholder="活动规则说明" style="width:300px"></textarea></div>
+                </div>
+              </div>
+              <div class="modal-footer">
+                <button class="table-btn" onclick="closeModal()">取消</button>
+                <button class="table-btn primary" onclick="saveNewCampaign()">创建活动</button>
+              </div>
+            </div>
+          </div>
+        `
+      } else if (state.modal === 'change-password') {
+        modalContent = `
+          <div class="modal-overlay" onclick="if(event.target===this)closeModal()">
+            <div class="modal-content" style="max-width:450px">
+              <div class="modal-header">
+                <div class="modal-title">🔐 修改密码</div>
+                <div class="modal-close" onclick="closeModal()">&times;</div>
+              </div>
+              <div class="modal-body">
+                <div class="detail-row">
+                  <div class="detail-label"><span style="color:red">*</span>当前密码</div>
+                  <div class="detail-value"><input type="password" class="filter-input" placeholder="请输入当前密码" style="width:200px"></div>
+                </div>
+                <div class="detail-row">
+                  <div class="detail-label"><span style="color:red">*</span>新密码</div>
+                  <div class="detail-value"><input type="password" class="filter-input" placeholder="请输入新密码" style="width:200px"></div>
+                </div>
+                <div class="detail-row">
+                  <div class="detail-label"><span style="color:red">*</span>确认密码</div>
+                  <div class="detail-value"><input type="password" class="filter-input" placeholder="请再次输入新密码" style="width:200px"></div>
+                </div>
+              </div>
+              <div class="modal-footer">
+                <button class="table-btn" onclick="closeModal()">取消</button>
+                <button class="table-btn primary" onclick="savePassword()">确认修改</button>
+              </div>
+            </div>
+          </div>
+        `
+      } else if (state.modal === 'login-logs') {
+        modalContent = `
+          <div class="modal-overlay" onclick="if(event.target===this)closeModal()">
+            <div class="modal-content" style="max-width:600px">
+              <div class="modal-header">
+                <div class="modal-title">📋 登录日志</div>
+                <div class="modal-close" onclick="closeModal()">&times;</div>
+              </div>
+              <div class="modal-body" style="padding:0">
+                <table class="table">
+                  <thead>
+                    <tr>
+                      <th>时间</th>
+                      <th>IP地址</th>
+                      <th>设备</th>
+                      <th>地点</th>
+                      <th>状态</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>2026-04-28 16:25</td>
+                      <td>113.89.xx.xx</td>
+                      <td>Windows Chrome</td>
+                      <td>云南丽江</td>
+                      <td><span class="tag tag-success">成功</span></td>
+                    </tr>
+                    <tr>
+                      <td>2026-04-28 10:15</td>
+                      <td>113.89.xx.xx</td>
+                      <td>iPhone Safari</td>
+                      <td>云南丽江</td>
+                      <td><span class="tag tag-success">成功</span></td>
+                    </tr>
+                    <tr>
+                      <td>2026-04-27 15:30</td>
+                      <td>117.148.xx.xx</td>
+                      <td>Windows Edge</td>
+                      <td>云南昆明</td>
+                      <td><span class="tag tag-success">成功</span></td>
+                    </tr>
+                    <tr>
+                      <td>2026-04-26 09:00</td>
+                      <td>113.89.xx.xx</td>
+                      <td>Windows Chrome</td>
+                      <td>云南丽江</td>
+                      <td><span class="tag tag-success">成功</span></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="modal-footer">
+                <button class="table-btn" onclick="closeModal()">关闭</button>
+              </div>
+            </div>
+          </div>
+        `
+      } else if (state.modal === 'review') {
+        modalContent = `
+          <div class="modal-overlay" onclick="if(event.target===this)closeModal()">
+            <div class="modal-content" style="max-width:500px">
+              <div class="modal-header">
+                <div class="modal-title">💬 回复评价</div>
+                <div class="modal-close" onclick="closeModal()">&times;</div>
+              </div>
+              <div class="modal-body">
+                <div class="detail-row">
+                  <div class="detail-label">用户评价</div>
+                  <div class="detail-value" style="background:#f9f9f9;padding:12px;border-radius:8px">
+                    环境很好，服务热情，下次还会再来！
+                  </div>
+                </div>
+                <div class="detail-row">
+                  <div class="detail-label"><span style="color:red">*</span>商家回复</div>
+                  <div class="detail-value">
+                    <textarea class="filter-input" rows="4" placeholder="请输入商家回复内容" style="width:100%;resize:vertical">感谢您的好评！期待您的下次光临~</textarea>
+                  </div>
+                </div>
+              </div>
+              <div class="modal-footer">
+                <button class="table-btn" onclick="closeModal()">取消</button>
+                <button class="table-btn primary" onclick="saveReviewReply()">提交回复</button>
+              </div>
+            </div>
+          </div>
+        `
+      } else if (state.modal === 'campaign') {
+        modalContent = `
+          <div class="modal-overlay" onclick="if(event.target===this)closeModal()">
+            <div class="modal-content" style="max-width:550px">
+              <div class="modal-header">
+                <div class="modal-title">📊 活动详情</div>
+                <div class="modal-close" onclick="closeModal()">&times;</div>
+              </div>
+              <div class="modal-body">
+                <div class="detail-row">
+                  <div class="detail-label">活动名称</div>
+                  <div class="detail-value"><strong>五一假期特惠</strong></div>
+                </div>
+                <div class="detail-row">
+                  <div class="detail-label">活动类型</div>
+                  <div class="detail-value"><span class="tag tag-danger">满减</span></div>
+                </div>
+                <div class="detail-row">
+                  <div class="detail-label">活动时间</div>
+                  <div class="detail-value">2026-05-01 至 2026-05-05</div>
+                </div>
+                <div class="detail-row">
+                  <div class="detail-label">参与商家</div>
+                  <div class="detail-value">56 家</div>
+                </div>
+                <div class="detail-row">
+                  <div class="detail-label">参与用户</div>
+                  <div class="detail-value">2,340 人</div>
+                </div>
+                <div class="detail-row">
+                  <div class="detail-label">带来的订单</div>
+                  <div class="detail-value"><strong style="color:#E8885A">486 单</strong></div>
+                </div>
+                <div class="detail-row">
+                  <div class="detail-label">活动营收</div>
+                  <div class="detail-value"><strong style="color:#E8885A">¥86,420</strong></div>
+                </div>
+              </div>
+              <div class="modal-footer">
+                <button class="table-btn" onclick="closeModal()">关闭</button>
+                <button class="table-btn primary">结束活动</button>
+              </div>
+            </div>
+          </div>
+        `
       }
       
       return modalContent
@@ -1706,6 +2079,111 @@
     
     function saveRoomStatus() {
       alert('房态信息已保存！')
+      closeModal()
+      render()
+    }
+    
+    // ====== 商家管理操作 ======
+    function approveMerchant(id) {
+      if (confirm('确定要通过该商家的入驻申请吗？')) {
+        const merchant = state.merchants.find(m => m.id === id)
+        if (merchant) merchant.status = 1
+        render()
+        alert('商家审核已通过！')
+      }
+    }
+    
+    function rejectMerchant(id) {
+      if (confirm('确定要拒绝该商家的入驻申请吗？')) {
+        const merchant = state.merchants.find(m => m.id === id)
+        if (merchant) merchant.status = -1
+        render()
+        alert('商家申请已拒绝')
+      }
+    }
+    
+    function disableMerchant(id) {
+      if (confirm('确定要禁用该商家吗？')) {
+        const merchant = state.merchants.find(m => m.id === id)
+        if (merchant) merchant.status = -1
+        render()
+        alert('商家已禁用')
+      }
+    }
+    
+    // ====== 订单管理操作 ======
+    function confirmOrder(id) {
+      const order = state.orders.find(o => o.id === id)
+      if (order) {
+        order.status = 'paid'
+        render()
+        alert('订单已确认！')
+      }
+    }
+    
+    function completeOrder(id) {
+      const order = state.orders.find(o => o.id === id)
+      if (order) {
+        order.status = 'completed'
+        render()
+        alert('订单已完成！')
+      }
+    }
+    
+    // ====== 评价管理操作 ======
+    function approveReview(id) {
+      const review = state.reviews.find(r => r.id === id)
+      if (review) {
+        review.status = 'approved'
+        render()
+        alert('评价已通过！')
+      }
+    }
+    
+    function rejectReview(id) {
+      if (confirm('确定要拒绝该评价吗？')) {
+        const review = state.reviews.find(r => r.id === id)
+        if (review) review.status = 'rejected'
+        render()
+        alert('评价已拒绝')
+      }
+    }
+    
+    // ====== 系统设置操作 ======
+    function toggle2FA() {
+      alert('双重认证功能演示：\n\n实际项目中将引导用户绑定手机号或邮箱进行二次验证。')
+    }
+    
+    function savePassword() {
+      alert('密码修改成功！')
+      closeModal()
+    }
+    
+    function saveReviewReply() {
+      alert('回复已提交！')
+      closeModal()
+    }
+    
+    function saveNewMerchant() {
+      alert('商家信息已提交，等待审核！')
+      closeModal()
+      render()
+    }
+    
+    function saveNewOrder() {
+      alert('订单创建成功！')
+      closeModal()
+      render()
+    }
+    
+    function saveNewRoom() {
+      alert('房型添加成功！')
+      closeModal()
+      render()
+    }
+    
+    function saveNewCampaign() {
+      alert('营销活动创建成功！')
       closeModal()
       render()
     }
