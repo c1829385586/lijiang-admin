@@ -1103,6 +1103,7 @@
                     <div class="row-actions">
                       ${r.status === 'pending' ? `<button class="row-btn success" onclick="approveReview(${r.id})">通过</button><button class="row-btn danger" onclick="rejectReview(${r.id})">拒绝</button>` : ''}
                       <button class="row-btn info" onclick="openModal('review', ${r.id})">回复</button>
+                      <button class="row-btn danger" onclick="deleteReview(${r.id})">删除</button>
                     </div>
                   </td>
                 </tr>
@@ -2589,6 +2590,17 @@
         if (review) review.status = 'rejected'
         render()
         alert('评价已拒绝')
+      }
+    }
+    
+    function deleteReview(id) {
+      if (confirm('确定要删除该评价吗？\n\n删除后不可恢复！')) {
+        const index = state.reviews.findIndex(r => r.id === id)
+        if (index > -1) {
+          state.reviews.splice(index, 1)
+          render()
+          alert('评价已删除！')
+        }
       }
     }
     
