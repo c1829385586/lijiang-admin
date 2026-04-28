@@ -843,6 +843,7 @@
                       <button class="row-btn info" onclick="openModal('order', ${o.id})">详情</button>
                       ${o.status === 'pending' ? `<button class="row-btn success" onclick="confirmOrder(${o.id})">确认</button>` : ''}
                       ${o.status === 'paid' ? `<button class="row-btn warning" onclick="completeOrder(${o.id})">完成</button>` : ''}
+                      ${o.status === 'completed' || o.status === 'paid' ? `<button class="row-btn danger" onclick="openRefundModal(${o.id})">退款</button>` : ''}
                     </div>
                   </td>
                 </tr>
@@ -1506,8 +1507,9 @@
                 </div>
                 <div class="modal-footer">
                   <button class="table-btn" onclick="closeModal()">关闭</button>
-                  ${order.status === 'pending' ? `<button class="table-btn primary">确认订单</button>` : ''}
-                  ${order.status === 'paid' ? `<button class="table-btn primary">完成订单</button>` : ''}
+                  ${order.status === 'pending' ? `<button class="table-btn primary" onclick="confirmOrder(${order.id});closeModal()">确认订单</button>` : ''}
+                  ${order.status === 'paid' ? `<button class="table-btn primary" onclick="completeOrder(${order.id});closeModal()">完成订单</button>` : ''}
+                  ${order.status === 'completed' || order.status === 'paid' ? `<button class="table-btn danger" onclick="openRefundModal(${order.id});closeModal()">退款</button>` : ''}
                 </div>
               </div>
             </div>
@@ -2048,6 +2050,73 @@
             </div>
           </div>
         `
+      } else if (state.modal === 'refund') {
+        const order = state.orders.find(o => o.id === state.modalData)
+        if (order) {
+          modalContent = `
+            <div class="modal-overlay" onclick="if(event.target===this)closeModal()">
+              <div class="modal-content" style="max-width:500px">
+                <div class="modal-header">
+                  <div class="modal-title">💰 订单退款</div>
+                  <div class="modal-close" onclick="closeModal()">&times;</div>
+                </div>
+                <div class="modal-body">
+                  <div style="background:#FFF5F5;border-radius:12px;padding:20px;margin-bottom:20px;text-align:center">
+                    <div style="font-size:14px;color:#666;margin-bottom:8px">订单金额</div>
+                    <div style="font-size:32px;font-weight:bold;color:#E8885A">¥${order.total_price}</div>
+                    <div style="font-size:12px;color:#999;margin-top:8px">订单号：${order.order_no}</div>
+                  </div>
+                  
+                  <div class="detail-row">
+                    <div class="detail-label"><span style="color:red">*</span>退款金额</div>
+                    <div class="detail-value">
+                      <input type="number" id="refund-amount" class="filter-input" placeholder="请输入退款金额" style="width:150px;font-size:16px" value="${order.total_price}" onclick="this.select()">
+                      <span style="color:#999;margin-left:8px">元</span>
+                    </div>
+                  </div>
+                  
+                  <div id="refund-tip" style="display:none;background:#FFF3E0;border-radius:8px;padding:12px;margin-top:16px;font-size:13px">
+                    <span style="color:#E8885A">⚠️ </span>
+                    <span id="refund-tip-text"></span>
+                  </div>
+                  
+                  <div class="detail-row" style="margin-top:16px">
+                    <div class="detail-label">退款原因</div>
+                    <div class="detail-value">
+                      <select class="filter-select" style="width:200px" id="refund-reason">
+                        <option>客户主动取消</option>
+                        <option>商家无房/满房</option>
+                        <option>房间设施问题</option>
+                        <option>服务态度差</option>
+                        <option>其他原因</option>
+                      </select>
+                    </div>
+                  </div>
+                  
+                  <div class="detail-row">
+                    <div class="detail-label">备注说明</div>
+                    <div class="detail-value">
+                      <textarea id="refund-note" class="filter-input" rows="2" placeholder="可填写退款说明" style="width:100%;resize:vertical"></textarea>
+                    </div>
+                  </div>
+                  
+                  <div style="margin-top:20px;padding:16px;background:#f9f9f9;border-radius:8px;font-size:13px;color:#666">
+                    <div style="margin-bottom:8px">📌 退款说明：</div>
+                    <ul style="margin:0;padding-left:20px;line-height:1.8">
+                      <li>退款金额必须与实际订单金额一致</li>
+                      <li>退款后将自动通知客户</li>
+                      <li>退款原路返回，约1-7个工作日到账</li>
+                    </ul>
+                  </div>
+                </div>
+                <div class="modal-footer">
+                  <button class="table-btn" onclick="closeModal()">取消</button>
+                  <button class="table-btn danger" onclick="processRefund(${order.id}, ${order.total_price})" id="refund-btn" disabled>确认退款</button>
+                </div>
+              </div>
+            </div>
+          `
+        }
       }
       
       return modalContent
@@ -2186,6 +2255,92 @@
       alert('营销活动创建成功！')
       closeModal()
       render()
+    }
+    
+    // ====== 退款功能 ======
+    function openRefundModal(id) {
+      state.modal = 'refund'
+      state.modalData = id
+      render()
+      // 延迟添加金额验证
+      setTimeout(() => {
+        const input = document.getElementById('refund-amount')
+        if (input) {
+          input.addEventListener('input', validateRefundAmount)
+          validateRefundAmount() // 初始验证
+        }
+      }, 100)
+    }
+    
+    function validateRefundAmount() {
+      const input = document.getElementById('refund-amount')
+      const btn = document.getElementById('refund-btn')
+      const tip = document.getElementById('refund-tip')
+      const tipText = document.getElementById('refund-tip-text')
+      
+      if (!input || !btn) return
+      
+      const amount = parseFloat(input.value)
+      const order = state.orders.find(o => o.id === state.modalData)
+      if (!order) return
+      
+      const actualAmount = order.total_price
+      
+      if (isNaN(amount) || amount <= 0) {
+        btn.disabled = true
+        tip.style.display = 'block'
+        tipText.textContent = '请输入有效的退款金额'
+        tip.style.background = '#FFF3E0'
+        tipText.style.color = '#E8885A'
+      } else if (amount !== actualAmount) {
+        btn.disabled = true
+        tip.style.display = 'block'
+        tipText.textContent = `金额不一致！实际订单金额为 ¥${actualAmount}，请输入相同金额`
+        tip.style.background = '#FFEBEE'
+        tipText.style.color = '#f56c6c'
+      } else {
+        btn.disabled = false
+        tip.style.display = 'none'
+      }
+    }
+    
+    function processRefund(id, actualAmount) {
+      const input = document.getElementById('refund-amount')
+      const reason = document.getElementById('refund-reason').value
+      const note = document.getElementById('refund-note').value
+      
+      if (!input) return
+      
+      const amount = parseFloat(input.value)
+      
+      // 最终验证
+      if (amount !== actualAmount) {
+        alert('退款金额必须与订单金额一致！\n实际订单金额：¥' + actualAmount)
+        return
+      }
+      
+      // 确认退款
+      if (confirm(`确定要退款 ¥${amount} 吗？\n\n退款原因：${reason}\n备注：${note || '无'}`)) {
+        const order = state.orders.find(o => o.id === id)
+        if (order) {
+          order.status = 'refunded'
+          order.refund_amount = amount
+          order.refund_time = new Date().toISOString()
+        }
+        
+        // 添加退款消息通知
+        state.notifications.unshift({
+          id: Date.now(),
+          title: '💰 退款成功',
+          content: `订单 ${order ? order.order_no : id} 已退款 ¥${amount}，资金将原路返回`,
+          time: '刚刚',
+          read: false
+        })
+        
+        closeModal()
+        render()
+        alert(`✅ 退款成功！\n\n退款金额：¥${amount}\n退款原因：${reason}\n\n资金将在1-7个工作日内原路返回给客户。`)
+      }
     }
     
     // ====== 初始化 ======
