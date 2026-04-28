@@ -77,30 +77,34 @@
       <div class="login-card">
         <div class="login-title">🏔️ 丽江本地生活</div>
         <div class="login-sub">后台管理系统</div>
-        <el-form @submit.prevent="doLogin">
-          <el-form-item>
-            <el-input v-model="loginForm.username" placeholder="用户名" size="large">
-              <template #prefix><span>👤</span></template>
-            </el-input>
-          </el-form-item>
-          <el-form-item>
-            <el-input v-model="loginForm.password" type="password" placeholder="密码" size="large" show-password @keyup.enter="doLogin">
-              <template #prefix><span>🔒</span></template>
-            </el-input>
-          </el-form-item>
-        </el-form>
-        <button type="button" class="login-btn" :disabled="loginLoading" @click="doLogin">
-          <span v-if="loginLoading">登录中...</span>
-          <span v-else>登录</span>
-        </button>
-        <style>
-          .login-btn { width: 100%; height: 48px; background: linear-gradient(135deg, #E8885A, #D46B6B); border: none; border-radius: 8px; color: #fff; font-size: 16px; font-weight: 500; cursor: pointer; margin-top: 8px; transition: opacity 0.2s; }
-          .login-btn:hover { opacity: 0.9; }
-          .login-btn:disabled { opacity: 0.6; cursor: not-allowed; }
-        </style>
+        <div class="login-form">
+          <div class="form-item">
+            <span class="input-icon">👤</span>
+            <input type="text" v-model="loginForm.username" placeholder="用户名" class="native-input" @keyup.enter="doLogin">
+          </div>
+          <div class="form-item">
+            <span class="input-icon">🔒</span>
+            <input type="password" v-model="loginForm.password" placeholder="密码" class="native-input" @keyup.enter="doLogin">
+          </div>
+          <button type="button" class="login-btn" :disabled="loginLoading" @click="doLogin">
+            <span v-if="loginLoading">登录中...</span>
+            <span v-else>登录</span>
+          </button>
+        </div>
         <p style="text-align:center;color:#ccc;font-size:12px;margin-top:16px">默认: admin / admin123</p>
       </div>
     </div>
+    <style>
+      .login-form { display: flex; flex-direction: column; gap: 16px; }
+      .form-item { display: flex; align-items: center; background: #f5f7fa; border-radius: 8px; padding: 0 12px; border: 1px solid #e4e7ed; }
+      .form-item:focus-within { border-color: #E8885A; background: #fff; }
+      .input-icon { font-size: 18px; margin-right: 8px; flex-shrink: 0; }
+      .native-input { flex: 1; height: 44px; border: none; background: transparent; font-size: 15px; outline: none; color: #333; }
+      .native-input::placeholder { color: #999; }
+      .login-btn { width: 100%; height: 48px; background: linear-gradient(135deg, #E8885A, #D46B6B); border: none; border-radius: 8px; color: #fff; font-size: 16px; font-weight: 500; cursor: pointer; transition: opacity 0.2s; }
+      .login-btn:hover { opacity: 0.9; }
+      .login-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+    </style>
 
     <!-- 后台主界面 -->
     <div class="layout" v-else>
