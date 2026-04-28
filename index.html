@@ -203,20 +203,44 @@
     
     // ====== 数据加载 ======
     async function loadDashboard() {
-      // 显示加载状态
-      state.dashboard = { totalStores: '-', totalOrders: '-', totalUsers: '-', todayRevenue: '-', pendingMerchants: '-', pendingOrders: '-', productCount: '-' }
+      // 模拟加载测试数据
+      state.dashboard = { 
+        totalStores: 156, 
+        totalOrders: 2847, 
+        totalUsers: 8923, 
+        todayRevenue: 12580, 
+        weekOrders: 342,
+        todayOrders: 28,
+        pendingMerchants: 12, 
+        pendingOrders: 8, 
+        productCount: 456 
+      }
       render()
     }
     
     async function loadMerchants() {
-      state.merchants = []
-      state.merchantsTotal = 0
+      state.merchants = [
+        { id: 1, name: '丽江古城客栈', type: 'hotel', contact_name: '张老板', phone: '13800138001', status: 1, created_at: '2026-04-15T10:30:00' },
+        { id: 2, name: '纳西风味餐厅', type: 'food', contact_name: '李经理', phone: '13900139002', status: 1, created_at: '2026-04-14T14:20:00' },
+        { id: 3, name: '玉龙雪山旅行社', type: 'travel', contact_name: '王导', phone: '13700137003', status: 0, created_at: '2026-04-16T09:15:00' },
+        { id: 4, name: '丽江特产店', type: 'product', contact_name: '赵店长', phone: '13600136004', status: 1, created_at: '2026-04-13T16:45:00' },
+        { id: 5, name: '束河古镇民宿', type: 'hotel', contact_name: '孙老板', phone: '13500135005', status: 2, created_at: '2026-04-12T11:30:00' },
+        { id: 6, name: '云南过桥米线', type: 'food', contact_name: '钱师傅', phone: '13400134006', status: 1, created_at: '2026-04-11T13:20:00' }
+      ]
+      state.merchantsTotal = 156
       render()
     }
     
     async function loadOrders() {
-      state.orders = []
-      state.ordersTotal = 0
+      state.orders = [
+        { id: 1, order_no: 'ORD20260428001', product_name: '丽江古城客栈-标准间', total_price: 388, status: 'completed', created_at: '2026-04-28T10:30:00' },
+        { id: 2, order_no: 'ORD20260428002', product_name: '纳西风味餐厅-双人套餐', total_price: 168, status: 'paid', created_at: '2026-04-28T11:15:00' },
+        { id: 3, order_no: 'ORD20260428003', product_name: '玉龙雪山一日游', total_price: 580, status: 'pending', created_at: '2026-04-28T12:00:00' },
+        { id: 4, order_no: 'ORD20260428004', product_name: '丽江特产-普洱茶饼', total_price: 298, status: 'completed', created_at: '2026-04-28T09:45:00' },
+        { id: 5, order_no: 'ORD20260428005', product_name: '束河古镇民宿-大床房', total_price: 428, status: 'cancelled', created_at: '2026-04-28T08:30:00' },
+        { id: 6, order_no: 'ORD20260428006', product_name: '云南过桥米线-单人套餐', total_price: 38, status: 'completed', created_at: '2026-04-28T14:20:00' }
+      ]
+      state.ordersTotal = 2847
       render()
     }
     
