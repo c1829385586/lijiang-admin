@@ -2368,7 +2368,7 @@
               </div>
               <div class="modal-footer">
                 <button class="table-btn" onclick="closeModal()">取消</button>
-                <button class="table-btn primary" onclick="saveNewAccount()">添加账号</button>
+                <button class="table-btn primary" onclick="setTimeout(saveNewAccount, 50)">添加账号</button>
               </div>
             </div>
           </div>
@@ -2418,7 +2418,7 @@
                 </div>
                 <div class="modal-footer">
                   <button class="table-btn" onclick="closeModal()">取消</button>
-                  <button class="table-btn primary" onclick="saveEditAccount(${account.id})">保存修改</button>
+                  <button class="table-btn primary" onclick="setTimeout(function(){saveEditAccount(${account.id})}, 50)">保存修改</button>
                 </div>
               </div>
             </div>
