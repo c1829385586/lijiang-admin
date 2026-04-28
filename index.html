@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>丽江本地生活 - 后台管理</title>
+  <title>丽江本地生活 - 智慧管理后台</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif; background: #f0f2f5; }
@@ -46,9 +46,12 @@
     .top-bar-btn.logout { color: #f56c6c; }
     .content-area { flex: 1; padding: 20px; overflow-y: auto; }
     
-    /* 统计卡片 */
+    /* 统计卡片 - 可点击 */
     .stat-cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 20px; }
-    .stat-card { background: #fff; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+    .stat-card { background: #fff; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); cursor: pointer; transition: all 0.3s; position: relative; overflow: hidden; }
+    .stat-card:hover { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(0,0,0,0.12); }
+    .stat-card::after { content: '查看详情 →'; position: absolute; bottom: 12px; right: 16px; font-size: 12px; color: #E8885A; opacity: 0; transition: opacity 0.3s; }
+    .stat-card:hover::after { opacity: 1; }
     .stat-label { font-size: 13px; color: #999; }
     .stat-value { font-size: 28px; font-weight: bold; color: #333; margin-top: 8px; }
     .stat-extra { font-size: 12px; color: #E8885A; margin-top: 4px; }
@@ -56,13 +59,40 @@
     .stat-card.green .stat-value { color: #6AAF7C; }
     .stat-card.purple .stat-value { color: #8B7EC8; }
     .stat-card.red .stat-value { color: #D46B6B; }
+    .stat-card.orange .stat-value { color: #E8885A; }
+    
+    /* 图表区域 */
+    .chart-section { background: #fff; border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+    .chart-title { font-size: 16px; font-weight: 500; margin-bottom: 16px; color: #333; }
+    .chart-row { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
+    .chart-container { height: 300px; position: relative; }
+    .chart-bar { display: flex; align-items: flex-end; justify-content: space-around; height: 250px; padding: 0 20px; }
+    .chart-bar-item { display: flex; flex-direction: column; align-items: center; flex: 1; }
+    .chart-bar-fill { width: 40px; background: linear-gradient(to top, #E8885A, #FFD4B8); border-radius: 4px 4px 0 0; transition: height 0.5s; position: relative; }
+    .chart-bar-fill::after { content: attr(data-value); position: absolute; top: -20px; left: 50%; transform: translateX(-50%); font-size: 11px; color: #666; }
+    .chart-bar-label { margin-top: 8px; font-size: 12px; color: #999; }
+    .pie-chart { display: flex; align-items: center; justify-content: center; height: 250px; }
+    .pie-container { position: relative; width: 200px; height: 200px; }
+    .pie-legend { margin-left: 30px; }
+    .pie-legend-item { display: flex; align-items: center; margin-bottom: 10px; font-size: 13px; }
+    .pie-legend-color { width: 12px; height: 12px; border-radius: 2px; margin-right: 8px; }
+    
+    /* 快捷操作 */
+    .quick-actions { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; margin-bottom: 20px; }
+    .quick-action { background: #fff; border-radius: 12px; padding: 16px; text-align: center; cursor: pointer; transition: all 0.3s; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+    .quick-action:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+    .quick-action-icon { font-size: 28px; margin-bottom: 8px; }
+    .quick-action-label { font-size: 13px; color: #666; }
     
     /* 表格 */
     .table-card { background: #fff; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
-    .table-title { font-size: 16px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; }
-    .table-filters { display: flex; gap: 8px; flex-wrap: wrap; }
-    .table-filter { padding: 6px 12px; border: 1px solid #dcdfe6; border-radius: 4px; background: #fff; font-size: 13px; cursor: pointer; }
-    .table-filter.active { border-color: #E8885A; color: #E8885A; background: #FDF6F4; }
+    .table-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+    .table-title { font-size: 16px; font-weight: 500; }
+    .table-actions { display: flex; gap: 8px; }
+    .table-btn { padding: 6px 16px; border: 1px solid #dcdfe6; border-radius: 4px; background: #fff; font-size: 13px; cursor: pointer; }
+    .table-btn:hover { border-color: #E8885A; color: #E8885A; }
+    .table-btn.primary { background: #E8885A; color: #fff; border-color: #E8885A; }
+    .table-btn.primary:hover { background: #D46B6B; }
     .table { width: 100%; border-collapse: collapse; }
     .table th, .table td { padding: 12px; text-align: left; border-bottom: 1px solid #f0f0f0; font-size: 14px; }
     .table th { color: #606266; font-weight: 500; background: #fafafa; }
@@ -76,26 +106,82 @@
     .tag-success { background: #E8F8E8; color: #67C23A; }
     .tag-danger { background: #FDF2F2; color: #F56C6C; }
     .tag-info { background: #F4F4F5; color: #909399; }
-    .table-actions { display: flex; gap: 8px; flex-wrap: wrap; }
-    .action-btn { padding: 4px 12px; border-radius: 4px; font-size: 12px; cursor: pointer; border: none; }
-    .action-btn.success { background: #67C23A; color: #fff; }
-    .action-btn.danger { background: #F56C6C; color: #fff; }
-    .action-btn.warning { background: #E6A23C; color: #fff; }
-    .action-btn:hover { opacity: 0.8; }
+    .tag-purple { background: #F0F0FF; color: #8B7EC8; }
+    .row-actions { display: flex; gap: 8px; }
+    .row-btn { padding: 4px 12px; border-radius: 4px; font-size: 12px; cursor: pointer; border: none; }
+    .row-btn.success { background: #67C23A; color: #fff; }
+    .row-btn.danger { background: #F56C6C; color: #fff; }
+    .row-btn.warning { background: #E6A23C; color: #fff; }
+    .row-btn.info { background: #909399; color: #fff; }
+    .row-btn:hover { opacity: 0.8; }
     .empty-state { text-align: center; padding: 60px; color: #999; }
     .pagination { margin-top: 16px; display: flex; justify-content: flex-end; gap: 8px; }
     .page-btn { padding: 6px 12px; border: 1px solid #dcdfe6; background: #fff; border-radius: 4px; cursor: pointer; font-size: 13px; }
     .page-btn:hover { border-color: #E8885A; color: #E8885A; }
     .page-btn.active { background: #E8885A; color: #fff; border-color: #E8885A; }
     
+    /* 筛选器 */
+    .filter-bar { display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+    .filter-input { padding: 8px 12px; border: 1px solid #dcdfe6; border-radius: 4px; font-size: 13px; outline: none; }
+    .filter-input:focus { border-color: #E8885A; }
+    .filter-select { padding: 8px 12px; border: 1px solid #dcdfe6; border-radius: 4px; font-size: 13px; background: #fff; cursor: pointer; }
+    
+    /* 详情弹窗 */
+    .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+    .modal-content { background: #fff; border-radius: 12px; width: 600px; max-height: 80vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+    .modal-header { padding: 20px; border-bottom: 1px solid #f0f0f0; display: flex; justify-content: space-between; align-items: center; }
+    .modal-title { font-size: 18px; font-weight: 500; }
+    .modal-close { font-size: 24px; cursor: pointer; color: #999; }
+    .modal-close:hover { color: #333; }
+    .modal-body { padding: 20px; }
+    .detail-row { display: flex; padding: 10px 0; border-bottom: 1px solid #f5f5f5; }
+    .detail-label { width: 120px; color: #999; font-size: 14px; }
+    .detail-value { flex: 1; color: #333; font-size: 14px; }
+    .modal-footer { padding: 16px 20px; border-top: 1px solid #f0f0f0; display: flex; justify-content: flex-end; gap: 12px; }
+    
     /* 设置页面 */
     .setting-section { background: #fff; border-radius: 12px; padding: 24px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
-    .setting-section h4 { margin-bottom: 16px; font-size: 15px; }
-    .setting-list { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
-    .setting-item { padding: 12px; background: #f9f9f9; border-radius: 6px; font-size: 13px; }
-    .setting-item .name { color: #333; font-weight: 500; }
-    .setting-item .desc { color: #999; font-size: 12px; margin-top: 4px; }
-    .setting-item .side { color: #E8885A; font-size: 11px; }
+    .setting-section h4 { margin-bottom: 16px; font-size: 16px; font-weight: 500; }
+    .setting-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .setting-card { padding: 16px; background: #f9f9f9; border-radius: 8px; }
+    .setting-card .name { color: #333; font-weight: 500; font-size: 14px; }
+    .setting-card .desc { color: #999; font-size: 12px; margin-top: 4px; }
+    .setting-card .side { color: #E8885A; font-size: 11px; margin-top: 8px; }
+    
+    /* 通知消息 */
+    .notification-badge { position: relative; }
+    .notification-badge::after { content: attr(data-count); position: absolute; top: -8px; right: -8px; background: #F56C6C; color: #fff; font-size: 10px; padding: 2px 6px; border-radius: 10px; }
+    
+    /* 趋势指示器 */
+    .trend { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; }
+    .trend.up { color: #67C23A; }
+    .trend.down { color: #F56C6C; }
+    
+    /* 进度条 */
+    .progress-bar { width: 100%; height: 8px; background: #f0f0f0; border-radius: 4px; overflow: hidden; }
+    .progress-fill { height: 100%; background: linear-gradient(90deg, #E8885A, #D46B6B); border-radius: 4px; transition: width 0.5s; }
+    
+    /* 标签页 */
+    .tabs { display: flex; gap: 4px; margin-bottom: 16px; border-bottom: 2px solid #f0f0f0; }
+    .tab { padding: 10px 20px; cursor: pointer; font-size: 14px; color: #666; border-bottom: 2px solid transparent; margin-bottom: -2px; }
+    .tab:hover { color: #E8885A; }
+    .tab.active { color: #E8885A; border-bottom-color: #E8885A; font-weight: 500; }
+    
+    /* 时间轴 */
+    .timeline { position: relative; padding-left: 20px; }
+    .timeline::before { content: ''; position: absolute; left: 5px; top: 0; bottom: 0; width: 2px; background: #e0e0e0; }
+    .timeline-item { position: relative; padding-bottom: 20px; }
+    .timeline-item::before { content: ''; position: absolute; left: -17px; top: 4px; width: 10px; height: 10px; background: #E8885A; border-radius: 50%; }
+    .timeline-time { font-size: 12px; color: #999; }
+    .timeline-content { font-size: 14px; color: #333; margin-top: 4px; }
+    
+    /* 响应式 */
+    @media (max-width: 1200px) {
+      .stat-cards { grid-template-columns: repeat(2, 1fr); }
+      .chart-row { grid-template-columns: 1fr; }
+      .quick-actions { grid-template-columns: repeat(3, 1fr); }
+      .setting-grid { grid-template-columns: repeat(2, 1fr); }
+    }
   </style>
 </head>
 <body>
@@ -114,14 +200,25 @@
       loginLoading: false,
       loginError: '',
       currentTime: '',
-      dashboard: { totalStores: 0, totalOrders: 0, totalUsers: 0, todayRevenue: 0, pendingMerchants: 0, pendingOrders: 0, productCount: 0 },
+      modal: null,
+      modalData: null,
+      activeTab: 'all',
+      dashboard: {
+        totalStores: 156, totalOrders: 2847, totalUsers: 8923, todayRevenue: 12580,
+        weekOrders: 342, todayOrders: 28, pendingMerchants: 12, pendingOrders: 8,
+        productCount: 456, occupancyRate: 78, avgPrice: 368, newUsers: 156,
+        totalReviews: 2341, complaintRate: 2.3
+      },
       merchants: [],
-      merchantsPage: 1,
-      merchantsTotal: 0,
       orders: [],
-      ordersPage: 1,
-      ordersTotal: 0,
-      settingsCollapsed: false
+      rooms: [],
+      users: [],
+      reviews: [],
+      notifications: [
+        { id: 1, title: '新订单提醒', content: '收到新订单 ORD20260428007', time: '10分钟前', read: false },
+        { id: 2, title: '商家入驻申请', content: '泸沽湖客栈申请入驻', time: '30分钟前', read: false },
+        { id: 3, title: '系统公告', content: '五一假期营销活动已开启', time: '1小时前', read: true }
+      ]
     }
     
     // ====== 菜单配置 ======
@@ -129,18 +226,21 @@
       { key: 'dashboard', icon: '📊', label: '数据概览' },
       { key: 'merchants', icon: '🏪', label: '商家管理' },
       { key: 'orders', icon: '📋', label: '订单管理' },
-      { key: 'stores', icon: '🏨', label: '店铺管理' },
-      { key: 'products', icon: '🎁', label: '商品管理' },
-      { key: 'banners', icon: '🖼️', label: '轮播图管理' },
+      { key: 'rooms', icon: '🏨', label: '房型管理' },
+      { key: 'users', icon: '👤', label: '会员管理' },
       { key: 'reviews', icon: '⭐', label: '评价管理' },
-      { key: 'users', icon: '👤', label: '用户管理' },
+      { key: 'marketing', icon: '🎯', label: '营销活动' },
+      { key: 'finance', icon: '💰', label: '财务报表' },
+      { key: 'notifications', icon: '🔔', label: '消息通知' },
       { key: 'settings', icon: '⚙️', label: '系统设置' }
     ]
     
-    const typeMap = { hotel: '酒店民宿', food: '美食', travel: '游玩', product: '特产' }
+    const typeMap = { hotel: '酒店民宿', food: '美食餐饮', travel: '旅游景点', product: '特产商品' }
     const statusMap = { 0: '待审核', 1: '已通过', 2: '已禁用', 3: '已拒绝' }
-    const orderStatusMap = { pending: '待处理', paid: '已支付', completed: '已完成', cancelled: '已取消' }
-    const orderStatusClass = { pending: 'warning', paid: 'success', completed: 'info', cancelled: 'danger' }
+    const orderStatusMap = { pending: '待处理', paid: '已支付', completed: '已完成', cancelled: '已取消', refunded: '已退款' }
+    const orderStatusClass = { pending: 'warning', paid: 'success', completed: 'info', cancelled: 'danger', refunded: 'purple' }
+    const roomTypeMap = { standard: '标准间', deluxe: '豪华间', suite: '套房', family: '家庭房', single: '单人间' }
+    const roomStatusMap = { available: '可预订', occupied: '已入住', cleaning: '清洁中', maintenance: '维修中' }
     
     // ====== 工具函数 ======
     function formatTime(date) {
@@ -155,6 +255,13 @@
       return `${y}-${m}-${day} ${h}:${min}`
     }
     
+    function formatDate(date) {
+      if (!date) return '-'
+      const d = new Date(date)
+      if (isNaN(d.getTime())) return String(date)
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+    }
+    
     function updateTime() {
       state.currentTime = new Date().toLocaleString('zh-CN')
     }
@@ -166,23 +273,24 @@
       const { username, password } = state.loginForm
       if (!username || !password) {
         state.loginError = '请输入用户名和密码'
-        return
+        return render()
       }
       state.loginLoading = true
       state.loginError = ''
+      render()
       
-      // 模拟登录过程
       setTimeout(() => {
         if (username === 'admin' && password === 'admin123') {
           localStorage.setItem('admin_token', 'admin-login-success')
           state.logged = true
-          alert('登录成功！')
+          state.loginLoading = false
           loadDashboard()
           render()
         } else {
+          state.loginLoading = false
           state.loginError = '用户名或密码错误'
+          render()
         }
-        state.loginLoading = false
       }, 800)
     }
     
@@ -195,52 +303,99 @@
     
     function goPage(key) {
       state.currentPage = key
+      state.activeTab = 'all'
       render()
       if (key === 'dashboard') loadDashboard()
       else if (key === 'merchants') loadMerchants()
       else if (key === 'orders') loadOrders()
+      else if (key === 'rooms') loadRooms()
+      else if (key === 'users') loadUsers()
+      else if (key === 'reviews') loadReviews()
+    }
+    
+    // ====== 弹窗控制 ======
+    function openModal(type, data) {
+      state.modal = type
+      state.modalData = data
+      render()
+    }
+    
+    function closeModal() {
+      state.modal = null
+      state.modalData = null
+      render()
     }
     
     // ====== 数据加载 ======
-    async function loadDashboard() {
-      // 模拟加载测试数据
-      state.dashboard = { 
-        totalStores: 156, 
-        totalOrders: 2847, 
-        totalUsers: 8923, 
-        todayRevenue: 12580, 
-        weekOrders: 342,
-        todayOrders: 28,
-        pendingMerchants: 12, 
-        pendingOrders: 8, 
-        productCount: 456 
+    function loadDashboard() {
+      state.dashboard = {
+        totalStores: 156, totalOrders: 2847, totalUsers: 8923, todayRevenue: 12580,
+        weekOrders: 342, todayOrders: 28, pendingMerchants: 12, pendingOrders: 8,
+        productCount: 456, occupancyRate: 78, avgPrice: 368, newUsers: 156,
+        totalReviews: 2341, complaintRate: 2.3
       }
       render()
     }
     
-    async function loadMerchants() {
+    function loadMerchants() {
       state.merchants = [
-        { id: 1, name: '丽江古城客栈', type: 'hotel', contact_name: '张老板', phone: '13800138001', status: 1, created_at: '2026-04-15T10:30:00' },
-        { id: 2, name: '纳西风味餐厅', type: 'food', contact_name: '李经理', phone: '13900139002', status: 1, created_at: '2026-04-14T14:20:00' },
-        { id: 3, name: '玉龙雪山旅行社', type: 'travel', contact_name: '王导', phone: '13700137003', status: 0, created_at: '2026-04-16T09:15:00' },
-        { id: 4, name: '丽江特产店', type: 'product', contact_name: '赵店长', phone: '13600136004', status: 1, created_at: '2026-04-13T16:45:00' },
-        { id: 5, name: '束河古镇民宿', type: 'hotel', contact_name: '孙老板', phone: '13500135005', status: 2, created_at: '2026-04-12T11:30:00' },
-        { id: 6, name: '云南过桥米线', type: 'food', contact_name: '钱师傅', phone: '13400134006', status: 1, created_at: '2026-04-11T13:20:00' }
+        { id: 1, name: '丽江古城客栈', type: 'hotel', contact_name: '张老板', phone: '13800138001', status: 1, created_at: '2026-04-15T10:30:00', address: '丽江市古城区五一街', rooms: 24, rating: 4.8, sales: 1250 },
+        { id: 2, name: '纳西风味餐厅', type: 'food', contact_name: '李经理', phone: '13900139002', status: 1, created_at: '2026-04-14T14:20:00', address: '丽江市古城区七一街', rooms: 0, rating: 4.6, sales: 890 },
+        { id: 3, name: '玉龙雪山旅行社', type: 'travel', contact_name: '王导', phone: '13700137003', status: 0, created_at: '2026-04-16T09:15:00', address: '丽江市玉龙县', rooms: 0, rating: 0, sales: 0 },
+        { id: 4, name: '丽江特产店', type: 'product', contact_name: '赵店长', phone: '13600136004', status: 1, created_at: '2026-04-13T16:45:00', address: '丽江市古城区四方街', rooms: 0, rating: 4.5, sales: 2340 },
+        { id: 5, name: '束河古镇民宿', type: 'hotel', contact_name: '孙老板', phone: '13500135005', status: 2, created_at: '2026-04-12T11:30:00', address: '丽江市束河古镇', rooms: 18, rating: 4.3, sales: 567 },
+        { id: 6, name: '云南过桥米线', type: 'food', contact_name: '钱师傅', phone: '13400134006', status: 1, created_at: '2026-04-11T13:20:00', address: '丽江市古城区大研街', rooms: 0, rating: 4.7, sales: 1567 },
+        { id: 7, name: '泸沽湖观景酒店', type: 'hotel', contact_name: '杨经理', phone: '13300133007', status: 1, created_at: '2026-04-10T09:00:00', address: '丽江市宁蒗县泸沽湖', rooms: 36, rating: 4.9, sales: 2100 },
+        { id: 8, name: '茶马古道茶馆', type: 'food', contact_name: '吴老板', phone: '13200132008', status: 1, created_at: '2026-04-09T15:30:00', address: '丽江市古城区新华街', rooms: 0, rating: 4.4, sales: 678 }
       ]
-      state.merchantsTotal = 156
       render()
     }
     
-    async function loadOrders() {
+    function loadOrders() {
       state.orders = [
-        { id: 1, order_no: 'ORD20260428001', product_name: '丽江古城客栈-标准间', total_price: 388, status: 'completed', created_at: '2026-04-28T10:30:00' },
-        { id: 2, order_no: 'ORD20260428002', product_name: '纳西风味餐厅-双人套餐', total_price: 168, status: 'paid', created_at: '2026-04-28T11:15:00' },
-        { id: 3, order_no: 'ORD20260428003', product_name: '玉龙雪山一日游', total_price: 580, status: 'pending', created_at: '2026-04-28T12:00:00' },
-        { id: 4, order_no: 'ORD20260428004', product_name: '丽江特产-普洱茶饼', total_price: 298, status: 'completed', created_at: '2026-04-28T09:45:00' },
-        { id: 5, order_no: 'ORD20260428005', product_name: '束河古镇民宿-大床房', total_price: 428, status: 'cancelled', created_at: '2026-04-28T08:30:00' },
-        { id: 6, order_no: 'ORD20260428006', product_name: '云南过桥米线-单人套餐', total_price: 38, status: 'completed', created_at: '2026-04-28T14:20:00' }
+        { id: 1, order_no: 'ORD20260428001', product_name: '丽江古城客栈-标准间', customer: '王先生', phone: '13800138001', total_price: 388, status: 'completed', created_at: '2026-04-28T10:30:00', check_in: '2026-04-28', check_out: '2026-04-30', guests: 2 },
+        { id: 2, order_no: 'ORD20260428002', product_name: '纳西风味餐厅-双人套餐', customer: '李女士', phone: '13900139002', total_price: 168, status: 'paid', created_at: '2026-04-28T11:15:00', check_in: '-', check_out: '-', guests: 2 },
+        { id: 3, order_no: 'ORD20260428003', product_name: '玉龙雪山一日游', customer: '张先生', phone: '13700137003', total_price: 580, status: 'pending', created_at: '2026-04-28T12:00:00', check_in: '2026-04-29', check_out: '2026-04-29', guests: 4 },
+        { id: 4, order_no: 'ORD20260428004', product_name: '丽江特产-普洱茶饼', customer: '赵女士', phone: '13600136004', total_price: 298, status: 'completed', created_at: '2026-04-28T09:45:00', check_in: '-', check_out: '-', guests: 0 },
+        { id: 5, order_no: 'ORD20260428005', product_name: '束河古镇民宿-大床房', customer: '孙先生', phone: '13500135005', total_price: 428, status: 'cancelled', created_at: '2026-04-28T08:30:00', check_in: '2026-04-28', check_out: '2026-04-29', guests: 2 },
+        { id: 6, order_no: 'ORD20260428006', product_name: '云南过桥米线-单人套餐', customer: '钱女士', phone: '13400134006', total_price: 38, status: 'completed', created_at: '2026-04-28T14:20:00', check_in: '-', check_out: '-', guests: 1 },
+        { id: 7, order_no: 'ORD20260428007', product_name: '泸沽湖观景酒店-湖景套房', customer: '周先生', phone: '13300133007', total_price: 1288, status: 'paid', created_at: '2026-04-28T15:00:00', check_in: '2026-05-01', check_out: '2026-05-03', guests: 2 },
+        { id: 8, order_no: 'ORD20260428008', product_name: '茶马古道茶馆-下午茶', customer: '吴女士', phone: '13200132008', total_price: 88, status: 'completed', created_at: '2026-04-28T16:30:00', check_in: '-', check_out: '-', guests: 2 }
       ]
-      state.ordersTotal = 2847
+      render()
+    }
+    
+    function loadRooms() {
+      state.rooms = [
+        { id: 1, name: '标准间', type: 'standard', merchant: '丽江古城客栈', price: 388, status: 'available', occupancy: 18, total: 24 },
+        { id: 2, name: '豪华间', type: 'deluxe', merchant: '丽江古城客栈', price: 588, status: 'occupied', occupancy: 22, total: 24 },
+        { id: 3, name: '湖景套房', type: 'suite', merchant: '泸沽湖观景酒店', price: 1288, status: 'available', occupancy: 8, total: 12 },
+        { id: 4, name: '家庭房', type: 'family', merchant: '束河古镇民宿', price: 688, status: 'cleaning', occupancy: 15, total: 18 },
+        { id: 5, name: '单人间', type: 'single', merchant: '丽江古城客栈', price: 268, status: 'maintenance', occupancy: 20, total: 24 },
+        { id: 6, name: '豪华套房', type: 'suite', merchant: '泸沽湖观景酒店', price: 1688, status: 'available', occupancy: 10, total: 12 }
+      ]
+      render()
+    }
+    
+    function loadUsers() {
+      state.users = [
+        { id: 1, name: '王先生', phone: '13800138001', email: 'wang@example.com', orders: 12, total: 5680, level: '金牌', status: 'active', joined: '2026-01-15' },
+        { id: 2, name: '李女士', phone: '13900139002', email: 'li@example.com', orders: 8, total: 3240, level: '银牌', status: 'active', joined: '2026-02-20' },
+        { id: 3, name: '张先生', phone: '13700137003', email: 'zhang@example.com', orders: 25, total: 12800, level: '钻石', status: 'active', joined: '2025-12-01' },
+        { id: 4, name: '赵女士', phone: '13600136004', email: 'zhao@example.com', orders: 3, total: 890, level: '普通', status: 'inactive', joined: '2026-03-10' },
+        { id: 5, name: '孙先生', phone: '13500135005', email: 'sun@example.com', orders: 15, total: 6780, level: '金牌', status: 'active', joined: '2026-01-28' }
+      ]
+      render()
+    }
+    
+    function loadReviews() {
+      state.reviews = [
+        { id: 1, user: '王先生', merchant: '丽江古城客栈', rating: 5, content: '环境非常好，服务热情，位置便利，推荐！', created_at: '2026-04-28T10:30:00', status: 'approved' },
+        { id: 2, user: '李女士', merchant: '纳西风味餐厅', rating: 4, content: '菜品口味不错，就是上菜有点慢。', created_at: '2026-04-28T11:15:00', status: 'approved' },
+        { id: 3, user: '张先生', merchant: '玉龙雪山旅行社', rating: 5, content: '导游专业，行程安排合理，非常满意！', created_at: '2026-04-28T12:00:00', status: 'pending' },
+        { id: 4, user: '赵女士', merchant: '丽江特产店', rating: 3, content: '茶叶品质一般，价格偏高。', created_at: '2026-04-28T09:45:00', status: 'approved' },
+        { id: 5, user: '孙先生', merchant: '束河古镇民宿', rating: 4, content: '房间干净，但是隔音效果不太好。', created_at: '2026-04-28T08:30:00', status: 'rejected' }
+      ]
       render()
     }
     
@@ -249,288 +404,1039 @@
       const app = document.getElementById('app')
       
       if (!state.logged) {
-        // 登录页面
-        app.innerHTML = `
-          <div class="login-page">
-            <div class="login-card">
-              <div class="login-title">🏔️ 丽江本地生活</div>
-              <div class="login-sub">后台管理系统</div>
-              <div class="login-form">
-                <div class="form-item">
-                  <span class="input-icon">👤</span>
-                  <input type="text" class="native-input" placeholder="用户名" value="${state.loginForm.username}" oninput="state.loginForm.username = this.value">
-                </div>
-                <div class="form-item">
-                  <span class="input-icon">🔒</span>
-                  <input type="password" class="native-input" placeholder="密码" value="${state.loginForm.password}" oninput="state.loginForm.password = this.value" onkeyup="if(event.key==='Enter')doLogin()">
-                </div>
-                <button class="login-btn" ${state.loginLoading ? 'disabled' : ''} onclick="doLogin()">
-                  ${state.loginLoading ? '登录中...' : '登录'}
-                </button>
-                ${state.loginError ? `<div class="error-msg">${state.loginError}</div>` : ''}
+        app.innerHTML = renderLogin()
+      } else {
+        app.innerHTML = renderMain()
+      }
+    }
+    
+    function renderLogin() {
+      return `
+        <div class="login-page">
+          <div class="login-card">
+            <div class="login-title">🏔️ 丽江本地生活</div>
+            <div class="login-sub">智慧管理后台</div>
+            <div class="login-form">
+              <div class="form-item">
+                <span class="input-icon">👤</span>
+                <input type="text" class="native-input" placeholder="用户名" value="${state.loginForm.username}" oninput="state.loginForm.username = this.value">
               </div>
-              <div class="login-hint">默认: admin / admin123</div>
+              <div class="form-item">
+                <span class="input-icon">🔒</span>
+                <input type="password" class="native-input" placeholder="密码" value="${state.loginForm.password}" oninput="state.loginForm.password = this.value" onkeyup="if(event.key==='Enter')doLogin()">
+              </div>
+              <button class="login-btn" ${state.loginLoading ? 'disabled' : ''} onclick="doLogin()">
+                ${state.loginLoading ? '登录中...' : '登录'}
+              </button>
+              ${state.loginError ? `<div class="error-msg">${state.loginError}</div>` : ''}
+            </div>
+            <div class="login-hint">默认: admin / admin123</div>
+          </div>
+        </div>
+      `
+    }
+    
+    function renderMain() {
+      const currentMenu = menuItems.find(m => m.key === state.currentPage) || menuItems[0]
+      let contentHTML = ''
+      
+      switch(state.currentPage) {
+        case 'dashboard': contentHTML = renderDashboard(); break
+        case 'merchants': contentHTML = renderMerchants(); break
+        case 'orders': contentHTML = renderOrders(); break
+        case 'rooms': contentHTML = renderRooms(); break
+        case 'users': contentHTML = renderUsers(); break
+        case 'reviews': contentHTML = renderReviews(); break
+        case 'marketing': contentHTML = renderMarketing(); break
+        case 'finance': contentHTML = renderFinance(); break
+        case 'notifications': contentHTML = renderNotifications(); break
+        case 'settings': contentHTML = renderSettings(); break
+        default: contentHTML = renderDashboard()
+      }
+      
+      return `
+        <div class="layout">
+          <div class="sidebar">
+            <div class="sidebar-logo">
+              <h2>🏔️ 丽江本地生活</h2>
+              <p>智慧管理后台 v3.0</p>
+            </div>
+            <div class="sidebar-menu">
+              ${menuItems.map(item => `
+                <div class="menu-item ${state.currentPage === item.key ? 'active' : ''}" onclick="goPage('${item.key}')">
+                  <span class="menu-icon">${item.icon}</span>
+                  <span>${item.label}</span>
+                  ${item.key === 'notifications' && state.notifications.filter(n => !n.read).length > 0 ? `<span style="background:#F56C6C;color:#fff;font-size:10px;padding:2px 6px;border-radius:10px;margin-left:auto">${state.notifications.filter(n => !n.read).length}</span>` : ''}
+                </div>
+              `).join('')}
+            </div>
+            <div style="padding:16px;border-top:1px solid rgba(255,255,255,0.1)">
+              <div class="menu-item" onclick="doLogout()" style="color:#D46B6B">
+                <span class="menu-icon">🚪</span>
+                <span>退出登录</span>
+              </div>
             </div>
           </div>
-        `
-      } else {
-        // 主界面
-        const currentMenu = menuItems.find(m => m.key === state.currentPage) || menuItems[0]
+          <div class="main-content">
+            <div class="top-bar">
+              <h3>${currentMenu.icon} ${currentMenu.label}</h3>
+              <div class="top-bar-right">
+                <span class="top-bar-time">${state.currentTime}</span>
+                <button class="top-bar-btn" onclick="goPage('dashboard')">🔄 刷新</button>
+                <button class="top-bar-btn logout" onclick="doLogout()">🚪 退出</button>
+              </div>
+            </div>
+            <div class="content-area">
+              ${contentHTML}
+            </div>
+          </div>
+        </div>
+        ${state.modal ? renderModal() : ''}
+      `
+    }
+    
+    // ====== 数据概览页面 ======
+    function renderDashboard() {
+      const weekData = [8200, 9320, 9010, 11340, 12900, 11300, 12580]
+      const weekLabels = ['周一', '周二', '周三', '周四', '周五', '周六', '周日']
+      const maxVal = Math.max(...weekData)
+      
+      return `
+        <div class="quick-actions">
+          <div class="quick-action" onclick="goPage('orders')">
+            <div class="quick-action-icon">📋</div>
+            <div class="quick-action-label">处理订单</div>
+          </div>
+          <div class="quick-action" onclick="goPage('merchants')">
+            <div class="quick-action-icon">🏪</div>
+            <div class="quick-action-label">审核商家</div>
+          </div>
+          <div class="quick-action" onclick="goPage('rooms')">
+            <div class="quick-action-icon">🏨</div>
+            <div class="quick-action-label">房态管理</div>
+          </div>
+          <div class="quick-action" onclick="goPage('users')">
+            <div class="quick-action-icon">👤</div>
+            <div class="quick-action-label">会员查询</div>
+          </div>
+          <div class="quick-action" onclick="goPage('marketing')">
+            <div class="quick-action-icon">🎯</div>
+            <div class="quick-action-label">发布活动</div>
+          </div>
+          <div class="quick-action" onclick="goPage('finance')">
+            <div class="quick-action-icon">📊</div>
+            <div class="quick-action-label">查看报表</div>
+          </div>
+        </div>
         
-        let contentHTML = ''
+        <div class="stat-cards">
+          <div class="stat-card" onclick="goPage('merchants')">
+            <div class="stat-label">总商家数</div>
+            <div class="stat-value">${state.dashboard.totalStores}</div>
+            <div class="stat-extra">
+              <span class="trend up">↑ 12%</span> 较上周
+            </div>
+          </div>
+          <div class="stat-card blue" onclick="goPage('orders')">
+            <div class="stat-label">总订单数</div>
+            <div class="stat-value">${state.dashboard.totalOrders}</div>
+            <div class="stat-extra">
+              <span class="trend up">↑ 8.5%</span> 近7天 ${state.dashboard.weekOrders} 单
+            </div>
+          </div>
+          <div class="stat-card green" onclick="goPage('users')">
+            <div class="stat-label">总会员数</div>
+            <div class="stat-value">${state.dashboard.totalUsers}</div>
+            <div class="stat-extra">
+              <span class="trend up">↑ 23%</span> 新增 ${state.dashboard.newUsers} 人
+            </div>
+          </div>
+          <div class="stat-card purple" onclick="goPage('finance')">
+            <div class="stat-label">今日营收</div>
+            <div class="stat-value">¥${state.dashboard.todayRevenue.toLocaleString()}</div>
+            <div class="stat-extra">
+              <span class="trend up">↑ 15%</span> 今日 ${state.dashboard.todayOrders} 单
+            </div>
+          </div>
+        </div>
         
-        if (state.currentPage === 'dashboard') {
-          contentHTML = `
-            <div class="stat-cards">
-              <div class="stat-card">
-                <div class="stat-label">总商家数</div>
-                <div class="stat-value">${state.dashboard.totalStores}</div>
-                <div class="stat-extra">🏪</div>
-              </div>
-              <div class="stat-card blue">
-                <div class="stat-label">总订单数</div>
-                <div class="stat-value">${state.dashboard.totalOrders}</div>
-                <div class="stat-extra">近7天 ${state.dashboard.weekOrders || 0} 单</div>
-              </div>
-              <div class="stat-card green">
-                <div class="stat-label">总用户数</div>
-                <div class="stat-value">${state.dashboard.totalUsers}</div>
-                <div class="stat-extra">👤</div>
-              </div>
-              <div class="stat-card purple">
-                <div class="stat-label">今日营收</div>
-                <div class="stat-value">¥${state.dashboard.todayRevenue}</div>
-                <div class="stat-extra">今日 ${state.dashboard.todayOrders || 0} 单</div>
+        <div class="stat-cards">
+          <div class="stat-card orange" onclick="goPage('rooms')">
+            <div class="stat-label">入住率</div>
+            <div class="stat-value">${state.dashboard.occupancyRate}%</div>
+            <div class="stat-extra">
+              <div class="progress-bar" style="margin-top:8px">
+                <div class="progress-fill" style="width:${state.dashboard.occupancyRate}%"></div>
               </div>
             </div>
-            <div class="stat-cards">
-              <div class="stat-card red">
-                <div class="stat-label">待审核商家</div>
-                <div class="stat-value">${state.dashboard.pendingMerchants}</div>
-              </div>
-              <div class="stat-card">
-                <div class="stat-label">待处理订单</div>
-                <div class="stat-value">${state.dashboard.pendingOrders}</div>
-              </div>
-              <div class="stat-card green">
-                <div class="stat-label">上架商品数</div>
-                <div class="stat-value">${state.dashboard.productCount}</div>
-              </div>
+          </div>
+          <div class="stat-card red" onclick="goPage('merchants')">
+            <div class="stat-label">待审核商家</div>
+            <div class="stat-value">${state.dashboard.pendingMerchants}</div>
+            <div class="stat-extra">点击查看详情</div>
+          </div>
+          <div class="stat-card" onclick="goPage('orders')">
+            <div class="stat-label">待处理订单</div>
+            <div class="stat-value">${state.dashboard.pendingOrders}</div>
+            <div class="stat-extra">点击查看详情</div>
+          </div>
+          <div class="stat-card blue" onclick="goPage('reviews')">
+            <div class="stat-label">好评率</div>
+            <div class="stat-value">${(100 - state.dashboard.complaintRate).toFixed(1)}%</div>
+            <div class="stat-extra">
+              <span class="trend up">↑ 2.1%</span> 投诉率 ${state.dashboard.complaintRate}%
             </div>
-          `
-        } else if (state.currentPage === 'merchants') {
-          if (state.merchants.length === 0) {
-            contentHTML = `
-              <div class="table-card">
-                <div class="table-title">商家管理</div>
-                <div class="empty-state">
-                  <p>暂无商家数据</p>
-                  <p style="margin-top:8px;font-size:12px">商家数据将从丽江本地生活小程序同步</p>
+          </div>
+        </div>
+        
+        <div class="chart-row">
+          <div class="chart-section">
+            <div class="chart-title">📈 本周营收趋势</div>
+            <div class="chart-bar">
+              ${weekData.map((val, i) => `
+                <div class="chart-bar-item">
+                  <div class="chart-bar-fill" style="height:${(val/maxVal*200)}px" data-value="¥${val}"></div>
+                  <div class="chart-bar-label">${weekLabels[i]}</div>
                 </div>
-              </div>
-            `
-          } else {
-            contentHTML = `
-              <div class="table-card">
-                <div class="table-title">
-                  <span>商家管理</span>
+              `).join('')}
+            </div>
+          </div>
+          <div class="chart-section">
+            <div class="chart-title">🥧 订单类型分布</div>
+            <div class="pie-chart">
+              <div class="pie-legend">
+                <div class="pie-legend-item">
+                  <div class="pie-legend-color" style="background:#E8885A"></div>
+                  <span>酒店民宿 45%</span>
                 </div>
-                <table class="table">
-                  <thead>
-                    <tr>
-                      <th>店铺名称</th>
-                      <th>类型</th>
-                      <th>联系人</th>
-                      <th>电话</th>
-                      <th>状态</th>
-                      <th>注册时间</th>
-                      <th>操作</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    ${state.merchants.map(m => `
-                      <tr>
-                        <td>${m.name || '-'}</td>
-                        <td><span class="tag tag-${m.type}">${typeMap[m.type] || m.type}</span></td>
-                        <td>${m.contact_name || '-'}</td>
-                        <td>${m.phone || '-'}</td>
-                        <td><span class="tag tag-${m.status === 1 ? 'success' : m.status === 0 ? 'warning' : 'danger'}">${statusMap[m.status] || m.status}</span></td>
-                        <td>${formatTime(m.created_at)}</td>
-                        <td>
-                          <div class="table-actions">
-                            <button class="action-btn success" onclick="auditMerchant(${m.id}, 1)">通过</button>
-                            <button class="action-btn danger" onclick="auditMerchant(${m.id}, 3)">拒绝</button>
-                          </div>
-                        </td>
-                      </tr>
-                    `).join('')}
-                  </tbody>
-                </table>
-              </div>
-            `
-          }
-        } else if (state.currentPage === 'orders') {
-          if (state.orders.length === 0) {
-            contentHTML = `
-              <div class="table-card">
-                <div class="table-title">订单管理</div>
-                <div class="empty-state">
-                  <p>暂无订单数据</p>
-                  <p style="margin-top:8px;font-size:12px">订单数据将从丽江本地生活小程序同步</p>
+                <div class="pie-legend-item">
+                  <div class="pie-legend-color" style="background:#4A90B8"></div>
+                  <span>美食餐饮 25%</span>
                 </div>
-              </div>
-            `
-          } else {
-            contentHTML = `
-              <div class="table-card">
-                <div class="table-title">订单管理</div>
-                <table class="table">
-                  <thead>
-                    <tr>
-                      <th>订单号</th>
-                      <th>商品</th>
-                      <th>金额</th>
-                      <th>状态</th>
-                      <th>时间</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    ${state.orders.map(o => `
-                      <tr>
-                        <td>${o.order_no || '-'}</td>
-                        <td>${o.product_name || '-'}</td>
-                        <td>¥${o.total_price || 0}</td>
-                        <td><span class="tag tag-${orderStatusClass[o.status] || 'info'}">${orderStatusMap[o.status] || o.status}</span></td>
-                        <td>${formatTime(o.created_at)}</td>
-                      </tr>
-                    `).join('')}
-                  </tbody>
-                </table>
-              </div>
-            `
-          }
-        } else if (state.currentPage === 'settings') {
-          contentHTML = `
-            <div class="setting-section">
-              <h4>📦 数据库表结构</h4>
-              <div class="setting-list">
-                <div class="setting-item">
-                  <div class="name">users</div>
-                  <div class="desc">用户信息</div>
-                  <div class="side">用户端</div>
+                <div class="pie-legend-item">
+                  <div class="pie-legend-color" style="background:#6AAF7C"></div>
+                  <span>旅游景点 20%</span>
                 </div>
-                <div class="setting-item">
-                  <div class="name">merchants</div>
-                  <div class="desc">商户账号</div>
-                  <div class="side">商户端</div>
-                </div>
-                <div class="setting-item">
-                  <div class="name">stores</div>
-                  <div class="desc">店铺信息</div>
-                  <div class="side">商户端写/用户端读</div>
-                </div>
-                <div class="setting-item">
-                  <div class="name">orders</div>
-                  <div class="desc">订单</div>
-                  <div class="side">双端读写</div>
-                </div>
-                <div class="setting-item">
-                  <div class="name">products</div>
-                  <div class="desc">特产商品</div>
-                  <div class="side">商户端写/用户端读</div>
-                </div>
-                <div class="setting-item">
-                  <div class="name">banners</div>
-                  <div class="desc">首页轮播图</div>
-                  <div class="side">管理后台</div>
-                </div>
-                <div class="setting-item">
-                  <div class="name">reviews</div>
-                  <div class="desc">评价</div>
-                  <div class="side">用户端写/商户端读</div>
-                </div>
-                <div class="setting-item">
-                  <div class="name">coupons</div>
-                  <div class="desc">优惠券</div>
-                  <div class="side">管理后台</div>
+                <div class="pie-legend-item">
+                  <div class="pie-legend-color" style="background:#8B7EC8"></div>
+                  <span>特产商品 10%</span>
                 </div>
               </div>
             </div>
-            <div class="setting-section">
-              <h4>ℹ️ 系统信息</h4>
-              <div class="setting-list">
-                <div class="setting-item">
-                  <div class="name">版本</div>
-                  <div class="desc">v2.0 纯前端版</div>
-                </div>
-                <div class="setting-item">
-                  <div class="name">技术栈</div>
-                  <div class="desc">原生 JavaScript + Supabase</div>
-                </div>
-                <div class="setting-item">
-                  <div class="name">部署平台</div>
-                  <div class="desc">Netlify</div>
-                </div>
-                <div class="setting-item">
-                  <div class="name">数据存储</div>
-                  <div class="desc">Supabase PostgreSQL</div>
+          </div>
+        </div>
+        
+        <div class="chart-section">
+          <div class="chart-title">🔔 最新动态</div>
+          <div class="timeline">
+            <div class="timeline-item">
+              <div class="timeline-time">10分钟前</div>
+              <div class="timeline-content">收到新订单 <strong>ORD20260428007</strong> - 泸沽湖观景酒店-湖景套房 ¥1288</div>
+            </div>
+            <div class="timeline-item">
+              <div class="timeline-time">30分钟前</div>
+              <div class="timeline-content">商家 <strong>泸沽湖客栈</strong> 提交入驻申请</div>
+            </div>
+            <div class="timeline-item">
+              <div class="timeline-time">1小时前</div>
+              <div class="timeline-content">会员 <strong>张先生</strong> 升级为钻石会员</div>
+            </div>
+            <div class="timeline-item">
+              <div class="timeline-time">2小时前</div>
+              <div class="timeline-content">系统公告：五一假期营销活动已开启</div>
+            </div>
+            <div class="timeline-item">
+              <div class="timeline-time">3小时前</div>
+              <div class="timeline-content">订单 <strong>ORD20260428005</strong> 已取消，退款处理中</div>
+            </div>
+          </div>
+        </div>
+      `
+    }
+    
+    // ====== 商家管理页面 ======
+    function renderMerchants() {
+      const filtered = state.activeTab === 'all' ? state.merchants : state.merchants.filter(m => {
+        if (state.activeTab === 'pending') return m.status === 0
+        if (state.activeTab === 'approved') return m.status === 1
+        if (state.activeTab === 'rejected') return m.status === 2
+        return true
+      })
+      
+      return `
+        <div class="table-card">
+          <div class="table-header">
+            <div class="table-title">商家管理</div>
+            <div class="table-actions">
+              <button class="table-btn" onclick="exportData('merchants')">📥 导出</button>
+              <button class="table-btn primary">+ 添加商家</button>
+            </div>
+          </div>
+          <div class="tabs">
+            <div class="tab ${state.activeTab === 'all' ? 'active' : ''}" onclick="state.activeTab='all';render()">全部</div>
+            <div class="tab ${state.activeTab === 'pending' ? 'active' : ''}" onclick="state.activeTab='pending';render()">待审核</div>
+            <div class="tab ${state.activeTab === 'approved' ? 'active' : ''}" onclick="state.activeTab='approved';render()">已通过</div>
+            <div class="tab ${state.activeTab === 'rejected' ? 'active' : ''}" onclick="state.activeTab='rejected';render()">已拒绝</div>
+          </div>
+          <div class="filter-bar">
+            <input type="text" class="filter-input" placeholder="搜索商家名称">
+            <select class="filter-select">
+              <option>全部类型</option>
+              <option>酒店民宿</option>
+              <option>美食餐饮</option>
+              <option>旅游景点</option>
+              <option>特产商品</option>
+            </select>
+          </div>
+          <table class="table">
+            <thead>
+              <tr>
+                <th>商家名称</th>
+                <th>类型</th>
+                <th>联系人</th>
+                <th>电话</th>
+                <th>评分</th>
+                <th>销量</th>
+                <th>状态</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${filtered.map(m => `
+                <tr>
+                  <td><strong>${m.name}</strong><br><small style="color:#999">${m.address}</small></td>
+                  <td><span class="tag tag-${m.type}">${typeMap[m.type]}</span></td>
+                  <td>${m.contact_name}</td>
+                  <td>${m.phone}</td>
+                  <td>${m.rating > 0 ? '⭐'.repeat(Math.floor(m.rating)) + ' ' + m.rating : '-'}</td>
+                  <td>${m.sales}</td>
+                  <td><span class="tag tag-${m.status === 1 ? 'success' : m.status === 0 ? 'warning' : 'danger'}">${statusMap[m.status]}</span></td>
+                  <td>
+                    <div class="row-actions">
+                      <button class="row-btn info" onclick="openModal('merchant', ${m.id})">详情</button>
+                      ${m.status === 0 ? `<button class="row-btn success">通过</button><button class="row-btn danger">拒绝</button>` : ''}
+                      ${m.status === 1 ? `<button class="row-btn warning">禁用</button>` : ''}
+                    </div>
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+          <div class="pagination">
+            <button class="page-btn">上一页</button>
+            <button class="page-btn active">1</button>
+            <button class="page-btn">2</button>
+            <button class="page-btn">3</button>
+            <button class="page-btn">下一页</button>
+          </div>
+        </div>
+      `
+    }
+    
+    // ====== 订单管理页面 ======
+    function renderOrders() {
+      return `
+        <div class="table-card">
+          <div class="table-header">
+            <div class="table-title">订单管理</div>
+            <div class="table-actions">
+              <button class="table-btn" onclick="exportData('orders')">📥 导出</button>
+              <button class="table-btn primary">+ 手动下单</button>
+            </div>
+          </div>
+          <div class="tabs">
+            <div class="tab ${state.activeTab === 'all' ? 'active' : ''}" onclick="state.activeTab='all';render()">全部</div>
+            <div class="tab ${state.activeTab === 'pending' ? 'active' : ''}" onclick="state.activeTab='pending';render()">待处理</div>
+            <div class="tab ${state.activeTab === 'paid' ? 'active' : ''}" onclick="state.activeTab='paid';render()">已支付</div>
+            <div class="tab ${state.activeTab === 'completed' ? 'active' : ''}" onclick="state.activeTab='completed';render()">已完成</div>
+          </div>
+          <div class="filter-bar">
+            <input type="text" class="filter-input" placeholder="订单号/客户姓名">
+            <input type="date" class="filter-input">
+            <select class="filter-select">
+              <option>全部状态</option>
+              <option>待处理</option>
+              <option>已支付</option>
+              <option>已完成</option>
+              <option>已取消</option>
+            </select>
+          </div>
+          <table class="table">
+            <thead>
+              <tr>
+                <th>订单号</th>
+                <th>商品/服务</th>
+                <th>客户</th>
+                <th>金额</th>
+                <th>入住/使用日期</th>
+                <th>状态</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${state.orders.map(o => `
+                <tr>
+                  <td><strong>${o.order_no}</strong></td>
+                  <td>${o.product_name}</td>
+                  <td>${o.customer}<br><small style="color:#999">${o.phone}</small></td>
+                  <td><strong style="color:#E8885A">¥${o.total_price}</strong></td>
+                  <td>${o.check_in !== '-' ? formatDate(o.check_in) + ' 至 ' + formatDate(o.check_out) : '-'}</td>
+                  <td><span class="tag tag-${orderStatusClass[o.status]}">${orderStatusMap[o.status]}</span></td>
+                  <td>
+                    <div class="row-actions">
+                      <button class="row-btn info" onclick="openModal('order', ${o.id})">详情</button>
+                      ${o.status === 'pending' ? `<button class="row-btn success">确认</button>` : ''}
+                      ${o.status === 'paid' ? `<button class="row-btn warning">完成</button>` : ''}
+                    </div>
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      `
+    }
+    
+    // ====== 房型管理页面 ======
+    function renderRooms() {
+      return `
+        <div class="table-card">
+          <div class="table-header">
+            <div class="table-title">房型管理</div>
+            <div class="table-actions">
+              <button class="table-btn" onclick="exportData('rooms')">📥 导出</button>
+              <button class="table-btn primary">+ 添加房型</button>
+            </div>
+          </div>
+          <div class="stat-cards" style="margin-bottom:16px">
+            <div class="stat-card green">
+              <div class="stat-label">可预订房间</div>
+              <div class="stat-value">86</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">已入住</div>
+              <div class="stat-value">42</div>
+            </div>
+            <div class="stat-card warning">
+              <div class="stat-label">清洁中</div>
+              <div class="stat-value">8</div>
+            </div>
+            <div class="stat-card danger">
+              <div class="stat-label">维修中</div>
+              <div class="stat-value">4</div>
+            </div>
+          </div>
+          <table class="table">
+            <thead>
+              <tr>
+                <th>房型名称</th>
+                <th>所属商家</th>
+                <th>类型</th>
+                <th>价格</th>
+                <th>入住率</th>
+                <th>状态</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${state.rooms.map(r => `
+                <tr>
+                  <td><strong>${r.name}</strong></td>
+                  <td>${r.merchant}</td>
+                  <td><span class="tag tag-info">${roomTypeMap[r.type]}</span></td>
+                  <td><strong style="color:#E8885A">¥${r.price}</strong></td>
+                  <td>
+                    <div style="display:flex;align-items:center;gap:8px">
+                      <div class="progress-bar" style="width:100px">
+                        <div class="progress-fill" style="width:${(r.occupancy/r.total*100)}%"></div>
+                      </div>
+                      <span style="font-size:12px">${r.occupancy}/${r.total}</span>
+                    </div>
+                  </td>
+                  <td><span class="tag tag-${r.status === 'available' ? 'success' : r.status === 'occupied' ? 'danger' : r.status === 'cleaning' ? 'warning' : 'info'}">${roomStatusMap[r.status]}</span></td>
+                  <td>
+                    <div class="row-actions">
+                      <button class="row-btn info">编辑</button>
+                      <button class="row-btn warning">房态</button>
+                    </div>
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      `
+    }
+    
+    // ====== 会员管理页面 ======
+    function renderUsers() {
+      return `
+        <div class="table-card">
+          <div class="table-header">
+            <div class="table-title">会员管理</div>
+            <div class="table-actions">
+              <button class="table-btn" onclick="exportData('users')">📥 导出</button>
+            </div>
+          </div>
+          <div class="filter-bar">
+            <input type="text" class="filter-input" placeholder="姓名/手机号">
+            <select class="filter-select">
+              <option>全部等级</option>
+              <option>钻石</option>
+              <option>金牌</option>
+              <option>银牌</option>
+              <option>普通</option>
+            </select>
+          </div>
+          <table class="table">
+            <thead>
+              <tr>
+                <th>会员信息</th>
+                <th>等级</th>
+                <th>订单数</th>
+                <th>消费总额</th>
+                <th>注册时间</th>
+                <th>状态</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${state.users.map(u => `
+                <tr>
+                  <td>
+                    <strong>${u.name}</strong><br>
+                    <small style="color:#999">${u.phone}</small>
+                  </td>
+                  <td><span class="tag tag-${u.level === '钻石' ? 'purple' : u.level === '金牌' ? 'warning' : u.level === '银牌' ? 'info' : ''}">${u.level}</span></td>
+                  <td>${u.orders}</td>
+                  <td><strong style="color:#E8885A">¥${u.total.toLocaleString()}</strong></td>
+                  <td>${u.joined}</td>
+                  <td><span class="tag tag-${u.status === 'active' ? 'success' : 'danger'}">${u.status === 'active' ? '正常' : '冻结'}</span></td>
+                  <td>
+                    <div class="row-actions">
+                      <button class="row-btn info" onclick="openModal('user', ${u.id})">详情</button>
+                    </div>
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      `
+    }
+    
+    // ====== 评价管理页面 ======
+    function renderReviews() {
+      return `
+        <div class="table-card">
+          <div class="table-header">
+            <div class="table-title">评价管理</div>
+            <div class="table-actions">
+              <button class="table-btn" onclick="exportData('reviews')">📥 导出</button>
+            </div>
+          </div>
+          <div class="tabs">
+            <div class="tab ${state.activeTab === 'all' ? 'active' : ''}" onclick="state.activeTab='all';render()">全部</div>
+            <div class="tab ${state.activeTab === 'pending' ? 'active' : ''}" onclick="state.activeTab='pending';render()">待审核</div>
+            <div class="tab ${state.activeTab === 'approved' ? 'active' : ''}" onclick="state.activeTab='approved';render()">已通过</div>
+          </div>
+          <table class="table">
+            <thead>
+              <tr>
+                <th>用户</th>
+                <th>商家</th>
+                <th>评分</th>
+                <th>评价内容</th>
+                <th>时间</th>
+                <th>状态</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${state.reviews.map(r => `
+                <tr>
+                  <td>${r.user}</td>
+                  <td>${r.merchant}</td>
+                  <td>${'⭐'.repeat(r.rating)} ${r.rating}分</td>
+                  <td>${r.content}</td>
+                  <td>${formatTime(r.created_at)}</td>
+                  <td><span class="tag tag-${r.status === 'approved' ? 'success' : r.status === 'pending' ? 'warning' : 'danger'}">${r.status === 'approved' ? '已通过' : r.status === 'pending' ? '待审核' : '已拒绝'}</span></td>
+                  <td>
+                    <div class="row-actions">
+                      ${r.status === 'pending' ? `<button class="row-btn success">通过</button><button class="row-btn danger">拒绝</button>` : ''}
+                      <button class="row-btn info">回复</button>
+                    </div>
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      `
+    }
+    
+    // ====== 营销活动页面 ======
+    function renderMarketing() {
+      return `
+        <div class="stat-cards" style="margin-bottom:20px">
+          <div class="stat-card">
+            <div class="stat-label">进行中的活动</div>
+            <div class="stat-value">3</div>
+          </div>
+          <div class="stat-card blue">
+            <div class="stat-label">发放优惠券</div>
+            <div class="stat-value">1,280</div>
+          </div>
+          <div class="stat-card green">
+            <div class="stat-label">活动带来的订单</div>
+            <div class="stat-value">486</div>
+          </div>
+          <div class="stat-card purple">
+            <div class="stat-label">活动营收</div>
+            <div class="stat-value">¥86,420</div>
+          </div>
+        </div>
+        
+        <div class="table-card">
+          <div class="table-header">
+            <div class="table-title">营销活动</div>
+            <div class="table-actions">
+              <button class="table-btn primary">+ 创建活动</button>
+            </div>
+          </div>
+          <table class="table">
+            <thead>
+              <tr>
+                <th>活动名称</th>
+                <th>类型</th>
+                <th>时间范围</th>
+                <th>参与商家</th>
+                <th>参与用户</th>
+                <th>状态</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>五一假期特惠</strong></td>
+                <td><span class="tag tag-danger">满减</span></td>
+                <td>2026-05-01 至 2026-05-05</td>
+                <td>56</td>
+                <td>2,340</td>
+                <td><span class="tag tag-success">进行中</span></td>
+                <td><div class="row-actions"><button class="row-btn info">详情</button><button class="row-btn warning">编辑</button></div></td>
+              </tr>
+              <tr>
+                <td><strong>新用户专享</strong></td>
+                <td><span class="tag tag-warning">折扣</span></td>
+                <td>2026-04-01 至 2026-06-30</td>
+                <td>全平台</td>
+                <td>1,890</td>
+                <td><span class="tag tag-success">进行中</span></td>
+                <td><div class="row-actions"><button class="row-btn info">详情</button><button class="row-btn warning">编辑</button></div></td>
+              </tr>
+              <tr>
+                <td><strong>春季赏花季</strong></td>
+                <td><span class="tag tag-success">优惠券</span></td>
+                <td>2026-03-15 至 2026-04-15</td>
+                <td>32</td>
+                <td>3,560</td>
+                <td><span class="tag tag-info">已结束</span></td>
+                <td><div class="row-actions"><button class="row-btn info">详情</button></div></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      `
+    }
+    
+    // ====== 财务报表页面 ======
+    function renderFinance() {
+      return `
+        <div class="stat-cards" style="margin-bottom:20px">
+          <div class="stat-card">
+            <div class="stat-label">本月营收</div>
+            <div class="stat-value">¥386,520</div>
+            <div class="stat-extra"><span class="trend up">↑ 18%</span> 较上月</div>
+          </div>
+          <div class="stat-card blue">
+            <div class="stat-label">本月订单</div>
+            <div class="stat-value">1,256</div>
+            <div class="stat-extra"><span class="trend up">↑ 12%</span> 较上月</div>
+          </div>
+          <div class="stat-card green">
+            <div class="stat-label">平台佣金</div>
+            <div class="stat-value">¥38,652</div>
+            <div class="stat-extra"><span class="trend up">↑ 15%</span> 较上月</div>
+          </div>
+          <div class="stat-card purple">
+            <div class="stat-label">退款金额</div>
+            <div class="stat-value">¥12,340</div>
+            <div class="stat-extra"><span class="trend down">↑ 3%</span> 较上月</div>
+          </div>
+        </div>
+        
+        <div class="chart-section">
+          <div class="chart-title">📊 月度营收趋势</div>
+          <div class="chart-bar">
+            ${[280000, 320000, 295000, 340000, 365000, 386520].map((val, i) => `
+              <div class="chart-bar-item">
+                <div class="chart-bar-fill" style="height:${(val/400000*200)}px" data-value="¥${(val/10000).toFixed(1)}万"></div>
+                <div class="chart-bar-label">${['1月', '2月', '3月', '4月', '5月', '6月'][i]}</div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+        
+        <div class="table-card">
+          <div class="table-header">
+            <div class="table-title">收支明细</div>
+            <div class="table-actions">
+              <button class="table-btn" onclick="exportData('finance')">📥 导出</button>
+            </div>
+          </div>
+          <table class="table">
+            <thead>
+              <tr>
+                <th>日期</th>
+                <th>类型</th>
+                <th>订单号</th>
+                <th>收入</th>
+                <th>支出</th>
+                <th>余额</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>2026-04-28</td>
+                <td><span class="tag tag-success">订单收入</span></td>
+                <td>ORD20260428007</td>
+                <td style="color:#67C23A">+¥1,288</td>
+                <td>-</td>
+                <td>¥386,520</td>
+              </tr>
+              <tr>
+                <td>2026-04-28</td>
+                <td><span class="tag tag-danger">退款</span></td>
+                <td>ORD20260428005</td>
+                <td>-</td>
+                <td style="color:#F56C6C">-¥428</td>
+                <td>¥385,232</td>
+              </tr>
+              <tr>
+                <td>2026-04-28</td>
+                <td><span class="tag tag-success">订单收入</span></td>
+                <td>ORD20260428004</td>
+                <td style="color:#67C23A">+¥298</td>
+                <td>-</td>
+                <td>¥385,660</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      `
+    }
+    
+    // ====== 消息通知页面 ======
+    function renderNotifications() {
+      return `
+        <div class="table-card">
+          <div class="table-header">
+            <div class="table-title">消息通知</div>
+            <div class="table-actions">
+              <button class="table-btn">全部已读</button>
+            </div>
+          </div>
+          <div class="timeline" style="padding:20px">
+            ${state.notifications.map(n => `
+              <div class="timeline-item" style="opacity:${n.read ? 0.6 : 1}">
+                <div class="timeline-time">${n.time}</div>
+                <div class="timeline-content">
+                  <strong>${n.title}</strong><br>
+                  ${n.content}
+                  ${!n.read ? '<span style="color:#E8885A;font-size:12px;margin-left:8px">● 未读</span>' : ''}
                 </div>
               </div>
+            `).join('')}
+          </div>
+        </div>
+      `
+    }
+    
+    // ====== 系统设置页面 ======
+    function renderSettings() {
+      return `
+        <div class="setting-section">
+          <h4>🔐 账号安全</h4>
+          <div class="setting-grid">
+            <div class="setting-card">
+              <div class="name">修改密码</div>
+              <div class="desc">定期更换密码可以提高账号安全性</div>
+              <div class="side" style="margin-top:12px"><button class="table-btn">修改</button></div>
             </div>
-          `
-        } else {
-          contentHTML = `
-            <div class="table-card">
-              <div class="empty-state">
-                <p>${currentMenu.icon} ${currentMenu.label}</p>
-                <p style="margin-top:8px;font-size:12px">该模块正在开发中...</p>
+            <div class="setting-card">
+              <div class="name">登录日志</div>
+              <div class="desc">查看最近登录记录</div>
+              <div class="side" style="margin-top:12px"><button class="table-btn">查看</button></div>
+            </div>
+            <div class="setting-card">
+              <div class="name">双重认证</div>
+              <div class="desc">开启后登录需要手机验证码</div>
+              <div class="side" style="margin-top:12px"><button class="table-btn">开启</button></div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="setting-section">
+          <h4>📦 数据库表结构</h4>
+          <div class="setting-grid">
+            <div class="setting-card">
+              <div class="name">users</div>
+              <div class="desc">用户信息表</div>
+              <div class="side">用户端</div>
+            </div>
+            <div class="setting-card">
+              <div class="name">merchants</div>
+              <div class="desc">商家信息表</div>
+              <div class="side">商户端</div>
+            </div>
+            <div class="setting-card">
+              <div class="name">stores</div>
+              <div class="desc">店铺信息表</div>
+              <div class="side">商户端写/用户端读</div>
+            </div>
+            <div class="setting-card">
+              <div class="name">orders</div>
+              <div class="desc">订单表</div>
+              <div class="side">双端读写</div>
+            </div>
+            <div class="setting-card">
+              <div class="name">rooms</div>
+              <div class="desc">房型信息表</div>
+              <div class="side">商户端写/用户端读</div>
+            </div>
+            <div class="setting-card">
+              <div class="name">products</div>
+              <div class="desc">特产商品表</div>
+              <div class="side">商户端写/用户端读</div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="setting-section">
+          <h4>ℹ️ 系统信息</h4>
+          <div class="setting-grid">
+            <div class="setting-card">
+              <div class="name">系统版本</div>
+              <div class="desc">v3.0 智慧版</div>
+            </div>
+            <div class="setting-card">
+              <div class="name">技术栈</div>
+              <div class="desc">原生 JavaScript + Supabase</div>
+            </div>
+            <div class="setting-card">
+              <div class="name">部署平台</div>
+              <div class="desc">Netlify + GitHub</div>
+            </div>
+            <div class="setting-card">
+              <div class="name">数据存储</div>
+              <div class="desc">Supabase PostgreSQL</div>
+            </div>
+            <div class="setting-card">
+              <div class="name">CDN</div>
+              <div class="desc">无外部依赖，纯原生</div>
+            </div>
+            <div class="setting-card">
+              <div class="name">最后更新</div>
+              <div class="desc">2026-04-28</div>
+            </div>
+          </div>
+        </div>
+      `
+    }
+    
+    // ====== 弹窗渲染 ======
+    function renderModal() {
+      let modalContent = ''
+      
+      if (state.modal === 'merchant') {
+        const merchant = state.merchants.find(m => m.id === state.modalData)
+        if (merchant) {
+          modalContent = `
+            <div class="modal-overlay" onclick="if(event.target===this)closeModal()">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <div class="modal-title">🏪 商家详情</div>
+                  <div class="modal-close" onclick="closeModal()">&times;</div>
+                </div>
+                <div class="modal-body">
+                  <div class="detail-row">
+                    <div class="detail-label">商家名称</div>
+                    <div class="detail-value">${merchant.name}</div>
+                  </div>
+                  <div class="detail-row">
+                    <div class="detail-label">类型</div>
+                    <div class="detail-value"><span class="tag tag-${merchant.type}">${typeMap[merchant.type]}</span></div>
+                  </div>
+                  <div class="detail-row">
+                    <div class="detail-label">联系人</div>
+                    <div class="detail-value">${merchant.contact_name}</div>
+                  </div>
+                  <div class="detail-row">
+                    <div class="detail-label">联系电话</div>
+                    <div class="detail-value">${merchant.phone}</div>
+                  </div>
+                  <div class="detail-row">
+                    <div class="detail-label">地址</div>
+                    <div class="detail-value">${merchant.address}</div>
+                  </div>
+                  <div class="detail-row">
+                    <div class="detail-label">评分</div>
+                    <div class="detail-value">${merchant.rating > 0 ? '⭐'.repeat(Math.floor(merchant.rating)) + ' ' + merchant.rating + '分' : '暂无评分'}</div>
+                  </div>
+                  <div class="detail-row">
+                    <div class="detail-label">累计销量</div>
+                    <div class="detail-value">${merchant.sales} 单</div>
+                  </div>
+                  <div class="detail-row">
+                    <div class="detail-label">注册时间</div>
+                    <div class="detail-value">${formatTime(merchant.created_at)}</div>
+                  </div>
+                  <div class="detail-row">
+                    <div class="detail-label">状态</div>
+                    <div class="detail-value"><span class="tag tag-${merchant.status === 1 ? 'success' : merchant.status === 0 ? 'warning' : 'danger'}">${statusMap[merchant.status]}</span></div>
+                  </div>
+                </div>
+                <div class="modal-footer">
+                  <button class="table-btn" onclick="closeModal()">关闭</button>
+                  ${merchant.status === 0 ? `<button class="table-btn primary">通过审核</button>` : ''}
+                </div>
               </div>
             </div>
           `
         }
-        
-        app.innerHTML = `
-          <div class="layout">
-            <div class="sidebar">
-              <div class="sidebar-logo">
-                <h2>🏔️ 丽江本地生活</h2>
-                <p>后台管理 v2.0</p>
-              </div>
-              <div class="sidebar-menu">
-                ${menuItems.map(item => `
-                  <div class="menu-item ${state.currentPage === item.key ? 'active' : ''}" onclick="goPage('${item.key}')">
-                    <span class="menu-icon">${item.icon}</span>
-                    <span>${item.label}</span>
+      } else if (state.modal === 'order') {
+        const order = state.orders.find(o => o.id === state.modalData)
+        if (order) {
+          modalContent = `
+            <div class="modal-overlay" onclick="if(event.target===this)closeModal()">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <div class="modal-title">📋 订单详情</div>
+                  <div class="modal-close" onclick="closeModal()">&times;</div>
+                </div>
+                <div class="modal-body">
+                  <div class="detail-row">
+                    <div class="detail-label">订单号</div>
+                    <div class="detail-value"><strong>${order.order_no}</strong></div>
                   </div>
-                `).join('')}
-              </div>
-              <div style="padding:16px;border-top:1px solid rgba(255,255,255,0.1)">
-                <div class="menu-item" onclick="doLogout()" style="color:#D46B6B">
-                  <span class="menu-icon">🚪</span>
-                  <span>退出登录</span>
+                  <div class="detail-row">
+                    <div class="detail-label">商品/服务</div>
+                    <div class="detail-value">${order.product_name}</div>
+                  </div>
+                  <div class="detail-row">
+                    <div class="detail-label">客户姓名</div>
+                    <div class="detail-value">${order.customer}</div>
+                  </div>
+                  <div class="detail-row">
+                    <div class="detail-label">联系电话</div>
+                    <div class="detail-value">${order.phone}</div>
+                  </div>
+                  <div class="detail-row">
+                    <div class="detail-label">订单金额</div>
+                    <div class="detail-value"><strong style="color:#E8885A;font-size:18px">¥${order.total_price}</strong></div>
+                  </div>
+                  <div class="detail-row">
+                    <div class="detail-label">入住/使用日期</div>
+                    <div class="detail-value">${order.check_in !== '-' ? formatDate(order.check_in) + ' 至 ' + formatDate(order.check_out) : '即时消费'}</div>
+                  </div>
+                  <div class="detail-row">
+                    <div class="detail-label">入住人数</div>
+                    <div class="detail-value">${order.guests} 人</div>
+                  </div>
+                  <div class="detail-row">
+                    <div class="detail-label">下单时间</div>
+                    <div class="detail-value">${formatTime(order.created_at)}</div>
+                  </div>
+                  <div class="detail-row">
+                    <div class="detail-label">订单状态</div>
+                    <div class="detail-value"><span class="tag tag-${orderStatusClass[order.status]}">${orderStatusMap[order.status]}</span></div>
+                  </div>
+                </div>
+                <div class="modal-footer">
+                  <button class="table-btn" onclick="closeModal()">关闭</button>
+                  ${order.status === 'pending' ? `<button class="table-btn primary">确认订单</button>` : ''}
+                  ${order.status === 'paid' ? `<button class="table-btn primary">完成订单</button>` : ''}
                 </div>
               </div>
             </div>
-            <div class="main-content">
-              <div class="top-bar">
-                <h3>${currentMenu.icon} ${currentMenu.label}</h3>
-                <div class="top-bar-right">
-                  <span class="top-bar-time">${state.currentTime}</span>
-                  <button class="top-bar-btn" onclick="goPage('dashboard')">🔄 刷新</button>
-                  <button class="top-bar-btn logout" onclick="doLogout()">🚪 退出</button>
+          `
+        }
+      } else if (state.modal === 'user') {
+        const user = state.users.find(u => u.id === state.modalData)
+        if (user) {
+          modalContent = `
+            <div class="modal-overlay" onclick="if(event.target===this)closeModal()">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <div class="modal-title">👤 会员详情</div>
+                  <div class="modal-close" onclick="closeModal()">&times;</div>
+                </div>
+                <div class="modal-body">
+                  <div class="detail-row">
+                    <div class="detail-label">会员姓名</div>
+                    <div class="detail-value"><strong>${user.name}</strong></div>
+                  </div>
+                  <div class="detail-row">
+                    <div class="detail-label">手机号</div>
+                    <div class="detail-value">${user.phone}</div>
+                  </div>
+                  <div class="detail-row">
+                    <div class="detail-label">邮箱</div>
+                    <div class="detail-value">${user.email}</div>
+                  </div>
+                  <div class="detail-row">
+                    <div class="detail-label">会员等级</div>
+                    <div class="detail-value"><span class="tag tag-${user.level === '钻石' ? 'purple' : user.level === '金牌' ? 'warning' : 'info'}">${user.level}</span></div>
+                  </div>
+                  <div class="detail-row">
+                    <div class="detail-label">订单数量</div>
+                    <div class="detail-value">${user.orders} 单</div>
+                  </div>
+                  <div class="detail-row">
+                    <div class="detail-label">消费总额</div>
+                    <div class="detail-value"><strong style="color:#E8885A">¥${user.total.toLocaleString()}</strong></div>
+                  </div>
+                  <div class="detail-row">
+                    <div class="detail-label">注册时间</div>
+                    <div class="detail-value">${user.joined}</div>
+                  </div>
+                  <div class="detail-row">
+                    <div class="detail-label">账号状态</div>
+                    <div class="detail-value"><span class="tag tag-${user.status === 'active' ? 'success' : 'danger'}">${user.status === 'active' ? '正常' : '冻结'}</span></div>
+                  </div>
+                </div>
+                <div class="modal-footer">
+                  <button class="table-btn" onclick="closeModal()">关闭</button>
+                  <button class="table-btn primary">编辑资料</button>
                 </div>
               </div>
-              <div class="content-area">
-                ${contentHTML}
-              </div>
             </div>
-          </div>
-        `
+          `
+        }
       }
+      
+      return modalContent
+    }
+    
+    // ====== 导出功能 ======
+    function exportData(type) {
+      alert(`正在导出${type}数据...\n（演示功能，实际项目中会生成Excel/CSV文件下载）`)
     }
     
     // ====== 初始化 ======
     render()
+    if (state.logged) loadDashboard()
   </script>
 </body>
 </html>
