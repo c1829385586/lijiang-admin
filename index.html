@@ -215,7 +215,7 @@
       rooms: [],
       users: [],
       reviews: [],
-      notifications: [
+      notifications: JSON.parse(localStorage.getItem('admin_notifications') || 'null') || [
         { id: 1, title: '新订单提醒', content: '收到新订单 ORD20260428007', time: '10分钟前', read: false },
         { id: 2, title: '商家入驻申请', content: '泸沽湖客栈申请入驻', time: '30分钟前', read: false },
         { id: 3, title: '系统公告', content: '五一假期营销活动已开启', time: '1小时前', read: true }
@@ -379,13 +379,21 @@
     
     function markAllRead() {
       state.notifications.forEach(n => n.read = true)
+      saveNotifications()
       render()
     }
     
     function markAsRead(id) {
       const notif = state.notifications.find(n => n.id === id)
-      if (notif) notif.read = true
+      if (notif) {
+        notif.read = true
+        saveNotifications()
+      }
       render()
+    }
+    
+    function saveNotifications() {
+      localStorage.setItem('admin_notifications', JSON.stringify(state.notifications))
     }
     
     function clickNotification(id) {
@@ -394,6 +402,7 @@
       
       // 标记为已读
       notif.read = true
+      saveNotifications()
       
       // 根据通知类型跳转到对应页面
       const title = notif.title
@@ -2722,6 +2731,7 @@
           time: '刚刚',
           read: false
         })
+        saveNotifications()
         
         closeModal()
         render()
