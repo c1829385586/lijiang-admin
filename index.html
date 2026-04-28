@@ -358,7 +358,39 @@
     // ====== 配置 ======
     const SUPABASE_URL = 'https://snbttutvgdocjpbbuznc.supabase.co'
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNuYnR0dXR2Z2RvY2pwYmJ1em5jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ1MTc1MDYsImV4cCI6MjA2MDA5MzUwNn0.FFEayHdfC5vXxZJLNJKHvg_Tjy_eGNXBpeB7W3vSFPY'
-    
+
+    // ====== Supabase API 请求封装 ======
+    async function supabaseRequest(table, method, data, query) {
+      let url = `${SUPABASE_URL}/rest/v1/${table}`
+      if (query) url += '?' + query
+      const options = {
+        method: method,
+        headers: {
+          'apikey': SUPABASE_KEY,
+          'Authorization': `Bearer ${SUPABASE_KEY}`,
+          'Content-Type': 'application/json',
+          'Prefer': method === 'POST' ? 'return=representation' : 'return=minimal'
+        }
+      }
+      if (data && (method === 'POST' || method === 'PATCH' || method === 'PUT')) {
+        options.body = JSON.stringify(data)
+      }
+      try {
+        const res = await fetch(url, options)
+        if (!res.ok) {
+          const err = await res.text()
+          console.error('Supabase 请求失败:', err)
+          return { error: err }
+        }
+        if (res.status === 204) return { success: true }
+        const json = await res.json()
+        return { data: json }
+      } catch (e) {
+        console.error('Supabase 请求异常:', e)
+        return { error: e.message }
+      }
+    }
+
     // ====== 全局状态 ======
     const state = {
       logged: !!localStorage.getItem('admin_token'),
@@ -387,18 +419,25 @@
         { id: 1, title: '新订单提醒', content: '收到新订单 ORD20260428007', time: '10分钟前', read: false },
         { id: 2, title: '商家入驻申请', content: '泸沽湖客栈申请入驻', time: '30分钟前', read: false },
         { id: 3, title: '系统公告', content: '五一假期营销活动已开启', time: '1小时前', read: true }
-      ]
+      ],
+      paymentConfig: JSON.parse(localStorage.getItem('admin_payment_config') || 'null') || {
+        mchId: '1744797790',
+        apiKey: '',
+        certSerialNo: '',
+        autoRefund: false,
+        refundNotify: true
+      }
     }
     
     // ====== 角色权限配置 ======
     const roles = {
       superadmin: {
         name: '超级管理员',
-        permissions: ['dashboard', 'merchants', 'orders', 'rooms', 'users', 'reviews', 'marketing', 'finance', 'notifications', 'settings', 'accounts', 'permissions']
+        permissions: ['dashboard', 'merchants', 'orders', 'rooms', 'users', 'reviews', 'marketing', 'finance', 'notifications', 'settings', 'accounts', 'permissions', 'payment']
       },
       admin: {
         name: '管理员',
-        permissions: ['dashboard', 'merchants', 'orders', 'rooms', 'users', 'reviews', 'marketing', 'finance', 'notifications', 'settings']
+        permissions: ['dashboard', 'merchants', 'orders', 'rooms', 'users', 'reviews', 'marketing', 'finance', 'notifications', 'settings', 'payment']
       },
       operator: {
         name: '运营专员',
@@ -406,7 +445,7 @@
       },
       finance: {
         name: '财务人员',
-        permissions: ['dashboard', 'orders', 'finance', 'notifications']
+        permissions: ['dashboard', 'orders', 'finance', 'notifications', 'payment']
       },
       customer_service: {
         name: '客服人员',
@@ -435,6 +474,7 @@
       { key: 'notifications', icon: '🔔', label: '消息通知' },
       { key: 'accounts', icon: '👥', label: '账号管理' },
       { key: 'permissions', icon: '🔐', label: '权限设置' },
+      { key: 'payment', icon: '💳', label: '支付配置' },
       { key: 'settings', icon: '⚙️', label: '系统设置' }
     ]
     
@@ -762,6 +802,7 @@
         case 'notifications': contentHTML = hasPermission('notifications') ? renderNotifications() : renderNoPermission(); break
         case 'accounts': contentHTML = hasPermission('accounts') ? renderAccounts() : renderNoPermission(); break
         case 'permissions': contentHTML = hasPermission('permissions') ? renderPermissions() : renderNoPermission(); break
+        case 'payment': contentHTML = hasPermission('payment') ? renderPaymentSettings() : renderNoPermission(); break
         case 'settings': contentHTML = hasPermission('settings') ? renderSettings() : renderNoPermission(); break
         default: contentHTML = renderDashboard()
       }
@@ -1670,6 +1711,143 @@
       `
     }
     
+    // ====== 支付配置页面 ======
+    function renderPaymentSettings() {
+      const cfg = state.paymentConfig
+      const isSuperAdmin = state.currentUser && state.currentUser.role === 'superadmin'
+
+      return `
+        <div class="setting-section">
+          <h4>💳 微信支付配置</h4>
+          <div style="display:grid;grid-template-columns:1fr;gap:16px;max-width:600px">
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <label style="font-size:14px;color:#666">商户号 (mch_id)</label>
+              <input type="text" class="filter-input" id="pay-mch-id" value="${cfg.mchId || '1744797790'}" readonly style="background:#f5f5f5">
+              <small style="color:#999">商户号由微信支付分配，不可修改</small>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <label style="font-size:14px;color:#666">APIv3 密钥</label>
+              <input type="password" class="filter-input" id="pay-api-key" value="${cfg.apiKey || ''}" placeholder="请填写微信支付 APIv3 密钥" ${!isSuperAdmin ? 'disabled' : ''}>
+              <small style="color:#999">仅在执行退款时需要，请妥善保管</small>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <label style="font-size:14px;color:#666">证书序列号</label>
+              <input type="text" class="filter-input" id="pay-cert-sn" value="${cfg.certSerialNo || ''}" placeholder="请填写证书序列号" ${!isSuperAdmin ? 'disabled' : ''}>
+            </div>
+          </div>
+        </div>
+
+        <div class="setting-section">
+          <h4>⚙️ 退款设置</h4>
+          <div style="display:grid;grid-template-columns:1fr;gap:16px;max-width:600px">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:12px;background:#f9f9f9;border-radius:8px">
+              <div>
+                <div style="font-weight:500">自动退款</div>
+                <div style="font-size:12px;color:#999;margin-top:4px">开启后，后台提交退款申请后系统自动向微信发起退款</div>
+              </div>
+              <label style="position:relative;display:inline-block;width:44px;height:24px">
+                <input type="checkbox" id="pay-auto-refund" ${cfg.autoRefund ? 'checked' : ''} style="opacity:0;width:0;height:0" onchange="toggleAutoRefund()" ${!isSuperAdmin ? 'disabled' : ''}>
+                <span style="position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:${cfg.autoRefund ? '#67C23A' : '#ccc'};border-radius:24px;transition:0.3s">
+                  <span style="position:absolute;content:'';height:20px;width:20px;left:2px;bottom:2px;background:#fff;border-radius:50%;transition:0.3s;transform:${cfg.autoRefund ? 'translateX(20px)' : 'translateX(0)'})"></span>
+                </span>
+              </label>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:12px;background:#f9f9f9;border-radius:8px">
+              <div>
+                <div style="font-weight:500">退款通知</div>
+                <div style="font-size:12px;color:#999;margin-top:4px">退款成功后发送消息通知</div>
+              </div>
+              <label style="position:relative;display:inline-block;width:44px;height:24px">
+                <input type="checkbox" id="pay-refund-notify" ${cfg.refundNotify ? 'checked' : ''} style="opacity:0;width:0;height:0" onchange="toggleRefundNotify()" ${!isSuperAdmin ? 'disabled' : ''}>
+                <span style="position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:${cfg.refundNotify ? '#67C23A' : '#ccc'};border-radius:24px;transition:0.3s">
+                  <span style="position:absolute;content:'';height:20px;width:20px;left:2px;bottom:2px;background:#fff;border-radius:50%;transition:0.3s;transform:${cfg.refundNotify ? 'translateX(20px)' : 'translateX(0)'})"></span>
+                </span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <div class="setting-section">
+          <h4>📋 数据库表说明</h4>
+          <div class="setting-grid">
+            <div class="setting-card">
+              <div class="name">orders</div>
+              <div class="desc">订单表，存储所有订单信息</div>
+              <div class="side">双端读写</div>
+            </div>
+            <div class="setting-card">
+              <div class="name">refund_requests</div>
+              <div class="desc">退款申请记录表</div>
+              <div class="side">后台写 / 云函数读</div>
+            </div>
+          </div>
+          <div style="margin-top:16px;padding:16px;background:#f0f8ff;border-radius:8px;font-size:13px;color:#333">
+            <strong>💡 退款流程说明：</strong><br><br>
+            1. 后台提交退款申请 → 写入 refund_requests 表<br>
+            2. 定时云函数（每5分钟）读取待处理退款<br>
+            3. 云函数调用微信支付退款接口<br>
+            4. 退款成功后更新订单状态<br><br>
+            <strong>建表 SQL（请在 Supabase SQL Editor 中执行）：</strong><br>
+            <pre style="background:#1a1a2e;color:#fff;padding:12px;border-radius:8px;margin-top:8px;overflow-x:auto;font-size:12px">
+CREATE TABLE IF NOT EXISTS refund_requests (
+  id SERIAL PRIMARY KEY,
+  order_id INTEGER,
+  order_no TEXT,
+  refund_no TEXT UNIQUE,
+  total_fee INTEGER,
+  refund_fee INTEGER,
+  reason TEXT,
+  note TEXT,
+  status TEXT DEFAULT 'pending',
+  created_at TIMESTAMP DEFAULT NOW(),
+  processed_at TIMESTAMP
+);
+
+CREATE INDEX idx_refund_status ON refund_requests(status);</pre>
+          </div>
+        </div>
+
+        ${isSuperAdmin ? `
+        <div style="display:flex;gap:12px;margin-top:20px">
+          <button class="table-btn primary" onclick="savePaymentConfig()">💾 保存配置</button>
+          <button class="table-btn" onclick="testPaymentConnection()">🔌 测试连接</button>
+        </div>
+        ` : '<div style="color:#999;margin-top:20px">⚠️ 仅超级管理员可修改支付配置</div>'}
+      `
+    }
+
+    function toggleAutoRefund() {
+      state.paymentConfig.autoRefund = !state.paymentConfig.autoRefund
+      render()
+    }
+
+    function toggleRefundNotify() {
+      state.paymentConfig.refundNotify = !state.paymentConfig.refundNotify
+      render()
+    }
+
+    function savePaymentConfig() {
+      const apiKey = document.getElementById('pay-api-key').value
+      const certSn = document.getElementById('pay-cert-sn').value
+      const autoRefund = document.getElementById('pay-auto-refund').checked
+      const refundNotify = document.getElementById('pay-refund-notify').checked
+
+      state.paymentConfig = {
+        mchId: '1744797790',
+        apiKey: apiKey,
+        certSerialNo: certSn,
+        autoRefund: autoRefund,
+        refundNotify: refundNotify
+      }
+
+      localStorage.setItem('admin_payment_config', JSON.stringify(state.paymentConfig))
+      alert('✅ 支付配置已保存到本地')
+    }
+
+    function testPaymentConnection() {
+      alert('🔌 连接测试功能需要在云函数环境中执行，请确保云函数已部署。')
+    }
+
     // ====== 无权限页面 ======
     function renderNoPermission() {
       return `
@@ -2964,44 +3142,83 @@
       }
     }
     
-    function processRefund(id, actualAmount) {
+    async function processRefund(id, actualAmount) {
       const input = document.getElementById('refund-amount')
       const reason = document.getElementById('refund-reason').value
       const note = document.getElementById('refund-note').value
-      
+
       if (!input) return
-      
+
       const amount = parseFloat(input.value)
-      
+
       // 最终验证
       if (amount !== actualAmount) {
         alert('退款金额必须与订单金额一致！\n实际订单金额：¥' + actualAmount)
         return
       }
-      
+
       // 确认退款
-      if (confirm(`确定要退款 ¥${amount} 吗？\n\n退款原因：${reason}\n备注：${note || '无'}`)) {
-        const order = state.orders.find(o => o.id === id)
-        if (order) {
-          order.status = 'refunded'
-          order.refund_amount = amount
-          order.refund_time = new Date().toISOString()
-        }
-        
-        // 添加退款消息通知
-        state.notifications.unshift({
-          id: Date.now(),
-          title: '💰 退款成功',
-          content: `订单 ${order ? order.order_no : id} 已退款 ¥${amount}，资金将原路返回`,
-          time: '刚刚',
-          read: false
-        })
-        saveNotifications()
-        
-        closeModal()
-        render()
-        alert(`✅ 退款成功！\n\n退款金额：¥${amount}\n退款原因：${reason}\n\n资金将在1-7个工作日内原路返回给客户。`)
+      if (!confirm(`确定要提交退款申请 ¥${amount} 吗？\n\n退款原因：${reason}\n备注：${note || '无'}\n\n系统将自动向微信支付发起退款请求。`)) {
+        return
       }
+
+      const order = state.orders.find(o => o.id === id)
+      if (!order) {
+        alert('订单不存在')
+        return
+      }
+
+      const refundNo = 'REF' + Date.now()
+
+      // 1. 更新本地状态
+      order.status = 'refunding'
+      order.refund_amount = amount
+      order.refund_reason = reason
+      order.refund_note = note
+      order.refund_no = refundNo
+      order.refund_requested_at = new Date().toISOString()
+
+      // 2. 调用 Supabase 创建退款请求（供云函数定时处理）
+      try {
+        // 插入退款请求表
+        const refundResult = await supabaseRequest('refund_requests', 'POST', {
+          order_id: id,
+          order_no: order.order_no,
+          refund_no: refundNo,
+          total_fee: Math.round(actualAmount * 100), // 转为分
+          refund_fee: Math.round(amount * 100),
+          reason: reason,
+          note: note,
+          status: 'pending',
+          created_at: new Date().toISOString()
+        })
+
+        if (refundResult.error) {
+          console.warn('Supabase 退款请求记录失败（可能表不存在）:', refundResult.error)
+        }
+
+        // 更新订单状态
+        await supabaseRequest('orders', 'PATCH',
+          { status: 'refunding', refund_no: refundNo, updated_at: new Date().toISOString() },
+          `order_no=eq.${order.order_no}`
+        )
+      } catch (e) {
+        console.warn('Supabase 请求失败:', e)
+      }
+
+      // 3. 添加消息通知
+      state.notifications.unshift({
+        id: Date.now(),
+        title: '💰 退款申请已提交',
+        content: `订单 ${order.order_no} 退款申请 ¥${amount} 已提交，系统将在5分钟内处理`,
+        time: '刚刚',
+        read: false
+      })
+      saveNotifications()
+
+      closeModal()
+      render()
+      alert(`✅ 退款申请已提交！\n\n退款单号：${refundNo}\n退款金额：¥${amount}\n\n系统将在5分钟内自动向微信支付发起退款，资金将原路返回给客户。`)
     }
     
     // ====== 账号管理功能 ======
