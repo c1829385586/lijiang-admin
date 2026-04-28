@@ -952,6 +952,7 @@
             <div class="table-title">房型管理</div>
             <div class="table-actions">
               <button class="table-btn" onclick="exportData('rooms')">📥 导出</button>
+              <button class="table-btn" onclick="openModal('room-status-all')">🏨 房态总览</button>
               <button class="table-btn primary" onclick="openModal('add-room')">+ 添加房型</button>
             </div>
           </div>
@@ -2434,6 +2435,62 @@
             </div>
           `
         }
+      } else if (state.modal === 'room-status-all') {
+        modalContent = `
+          <div class="modal-overlay" onclick="if(event.target===this)closeModal()">
+            <div class="modal-content" style="max-width:900px;max-height:90vh;overflow-y:auto">
+              <div class="modal-header">
+                <div class="modal-title">🏨 房态总览</div>
+                <div class="modal-close" onclick="closeModal()">&times;</div>
+              </div>
+              <div class="modal-body">
+                ${state.rooms.map(room => {
+                  const roomNumbers = Array.from({length: room.total}, (_, i) => {
+                    const num = 100 + room.id * 100 + i + 1
+                    const status = i < room.occupancy ? 'occupied' : i < room.occupancy + 2 ? 'cleaning' : i === room.total - 1 ? 'maintenance' : 'available'
+                    const statusText = status === 'occupied' ? '已入住' : status === 'cleaning' ? '清洁中' : status === 'maintenance' ? '维修中' : '可预订'
+                    const statusClass = status === 'occupied' ? 'danger' : status === 'cleaning' ? 'warning' : status === 'maintenance' ? 'info' : 'success'
+                    const bgColor = status === 'occupied' ? '#FFF5F5' : status === 'cleaning' ? '#FFFAF0' : status === 'maintenance' ? '#F0F8FF' : '#F0FFF0'
+                    return { num, status, statusText, statusClass, bgColor }
+                  })
+                  return `
+                    <div style="margin-bottom:24px">
+                      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+                        <div>
+                          <strong style="font-size:16px">${room.name}</strong>
+                          <span style="color:#999;margin-left:8px">${room.merchant}</span>
+                        </div>
+                        <div>
+                          <span class="tag tag-info">${roomTypeMap[room.type]}</span>
+                          <span style="color:#E8885A;margin-left:8px;font-weight:bold">¥${room.price}</span>
+                        </div>
+                      </div>
+                      <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px">
+                        ${roomNumbers.map(r => `
+                          <div style="border:1px solid #e0e0e0;border-radius:8px;padding:10px;text-align:center;background:${r.bgColor};cursor:pointer;transition:all 0.2s" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'" onclick="toggleRoomStatus(this, ${r.num})">
+                            <div style="font-weight:bold;font-size:14px;margin-bottom:4px">${r.num}</div>
+                            <span class="tag tag-${r.statusClass}" style="font-size:11px;padding:2px 6px" data-status="${r.status}">${r.statusText}</span>
+                          </div>
+                        `).join('')}
+                      </div>
+                    </div>
+                  `
+                }).join('')}
+                
+                <div style="display:flex;gap:16px;justify-content:center;margin-top:20px;padding:16px;background:#f9f9f9;border-radius:8px">
+                  <div style="display:flex;align-items:center;gap:6px"><span style="width:12px;height:12px;background:#F0FFF0;border:1px solid #6AAF7C;border-radius:2px"></span><span style="font-size:13px">可预订</span></div>
+                  <div style="display:flex;align-items:center;gap:6px"><span style="width:12px;height:12px;background:#FFF5F5;border:1px solid #D46B6B;border-radius:2px"></span><span style="font-size:13px">已入住</span></div>
+                  <div style="display:flex;align-items:center;gap:6px"><span style="width:12px;height:12px;background:#FFFAF0;border:1px solid #E8885A;border-radius:2px"></span><span style="font-size:13px">清洁中</span></div>
+                  <div style="display:flex;align-items:center;gap:6px"><span style="width:12px;height:12px;background:#F0F8FF;border:1px solid #4A90B8;border-radius:2px"></span><span style="font-size:13px">维修中</span></div>
+                </div>
+              </div>
+              <div class="modal-footer">
+                <button class="table-btn" onclick="closeModal()">关闭</button>
+                <button class="table-btn primary" onclick="saveAllRoomStatus()">保存房态</button>
+              </div>
+            </div>
+          </div>
+        `
       } else if (state.modal === 'refund') {
         const order = state.orders.find(o => o.id === state.modalData)
         if (order) {
@@ -2648,6 +2705,33 @@
     
     function saveNewCampaign() {
       alert('营销活动创建成功！')
+      closeModal()
+      render()
+    }
+    
+    // ====== 房态总览功能 ======
+    function toggleRoomStatus(el, roomNum) {
+      const tag = el.querySelector('.tag')
+      const currentStatus = tag.getAttribute('data-status')
+      
+      const statusCycle = {
+        'available': { next: 'occupied', text: '已入住', class: 'danger', bg: '#FFF5F5' },
+        'occupied': { next: 'cleaning', text: '清洁中', class: 'warning', bg: '#FFFAF0' },
+        'cleaning': { next: 'maintenance', text: '维修中', class: 'info', bg: '#F0F8FF' },
+        'maintenance': { next: 'available', text: '可预订', class: 'success', bg: '#F0FFF0' }
+      }
+      
+      const next = statusCycle[currentStatus]
+      if (next) {
+        tag.setAttribute('data-status', next.next)
+        tag.className = 'tag tag-' + next.class
+        tag.textContent = next.text
+        el.style.background = next.bg
+      }
+    }
+    
+    function saveAllRoomStatus() {
+      alert('房态已保存！')
       closeModal()
       render()
     }
