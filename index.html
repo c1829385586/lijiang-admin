@@ -634,17 +634,10 @@
           }
           loginLoading.value = true
           
-          // 简单验证（生产环境应使用加密）
-          const { data, error } = await supabase
-            .from('admins')
-            .select('*')
-            .eq('username', loginForm.value.username)
-            .eq('password_hash', loginForm.value.password)
-            .single()
+          // 简单的本地验证（不需要数据库）
+          await new Promise(r => setTimeout(r, 500)) // 模拟登录过程
           
-          loginLoading.value = false
-          
-          if (data) {
+          if (loginForm.value.username === 'admin' && loginForm.value.password === 'admin123') {
             localStorage.setItem('admin_token', 'supabase-admin-token')
             logged.value = true
             ElMessage.success('登录成功')
@@ -652,6 +645,8 @@
           } else {
             ElMessage.error('用户名或密码错误')
           }
+          
+          loginLoading.value = false
         }
         
         function doLogout() {
